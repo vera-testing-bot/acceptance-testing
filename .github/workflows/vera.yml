@@ -67,6 +67,7 @@ jobs:
           anthropic_api_key: ${{ steps.creds.outputs.anthropic_api_key }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_bots: "vera-staging"
+          additional_permissions: "Bash(*),Edit(*),Write(*),Read(*),Glob(*),Grep(*)"
           prompt: |
             Implement the requirements described in issue #${{ inputs.issue_number }}.
             Read the issue first, then implement the changes and create a pull request.
@@ -96,11 +97,3 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"failed\", \"error\": \"Workflow failed\"}" \
             || echo "::warning::Failed to report failure to Vera API"
-
-      - name: Cleanup workspace
-        if: always()
-        run: |
-          echo "Cleaning up ephemeral workspace"
-          cd /
-          rm -rf "$GITHUB_WORKSPACE" || echo "Workspace cleanup skipped (bind mount)"
-          echo "Workspace cleaned"
