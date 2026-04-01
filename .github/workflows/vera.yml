@@ -65,7 +65,10 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ steps.creds.outputs.anthropic_api_key }}
-          issue_number: ${{ inputs.issue_number }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            Implement the requirements described in issue #${{ inputs.issue_number }}.
+            Read the issue first, then implement the changes and create a pull request.
 
       - name: Report success
         if: success()
