@@ -13,6 +13,16 @@ on:
         required: false
         default: ""
         type: string
+      callback_token:
+        description: "HMAC callback token for Vera API auth"
+        required: false
+        default: ""
+        type: string
+      vera_api_url:
+        description: "Vera API base URL for credential exchange and callbacks"
+        required: false
+        default: ""
+        type: string
 
 jobs:
   vera:
@@ -23,25 +33,60 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Run Vera
+      - name: Fetch credentials
+        id: creds
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           VERA_JOB_ID: ${{ inputs.job_id }}
-          VERA_ISSUE_NUMBER: ${{ inputs.issue_number }}
+          VERA_CALLBACK_TOKEN: ${{ inputs.callback_token }}
+          VERA_API_URL: ${{ inputs.vera_api_url }}
         run: |
-          echo "Running Vera job: ${VERA_JOB_ID:-none}"
-          echo "Issue number: ${VERA_ISSUE_NUMBER:-none}"
-          echo "Vera workflow completed successfully"
+          if [ -z "$VERA_API_URL" ] || [ -z "$VERA_JOB_ID" ] || [ -z "$VERA_CALLBACK_TOKEN" ]; then
+            echo "::error::Missing required inputs: vera_api_url, job_id, or callback_token"
+            exit 1
+          fi
+          RESPONSE=$(curl -sf --retry 3 --retry-delay 5 \
+            -X POST "${VERA_API_URL}/internal/jobs/credentials" \
+            -H "Content-Type: application/json" \
+            -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\"}")
+          API_KEY=$(echo "$RESPONSE" | jq -r '.anthropic_api_key // empty')
+          if [ -z "$API_KEY" ]; then
+            echo "::error::Failed to fetch credentials from Vera API"
+            exit 1
+          fi
+          echo "::add-mask::${API_KEY}"
+          echo "anthropic_api_key=${API_KEY}" >> "$GITHUB_OUTPUT"
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ steps.creds.outputs.anthropic_api_key }}
+          issue_number: ${{ inputs.issue_number }}
+
+      - name: Report success
+        if: success()
+        env:
+          VERA_JOB_ID: ${{ inputs.job_id }}
+          VERA_CALLBACK_TOKEN: ${{ inputs.callback_token }}
+          VERA_API_URL: ${{ inputs.vera_api_url }}
+        run: |
+          curl -sf --retry 3 --retry-delay 5 \
+            -X POST "${VERA_API_URL}/internal/jobs/callback" \
+            -H "Content-Type: application/json" \
+            -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"completed\"}" \
+            || echo "::warning::Failed to report success to Vera API"
+
+      - name: Report failure
+        if: failure()
+        env:
+          VERA_JOB_ID: ${{ inputs.job_id }}
+          VERA_CALLBACK_TOKEN: ${{ inputs.callback_token }}
+          VERA_API_URL: ${{ inputs.vera_api_url }}
+        run: |
+          curl -sf --retry 3 --retry-delay 5 \
+            -X POST "${VERA_API_URL}/internal/jobs/callback" \
+            -H "Content-Type: application/json" \
+            -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"failed\", \"error\": \"Workflow failed\"}" \
+            || echo "::warning::Failed to report failure to Vera API"
 
       - name: Cleanup workspace
         if: always()
