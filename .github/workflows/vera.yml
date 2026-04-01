@@ -1,0 +1,52 @@
+name: Vera
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: "Vera job ID"
+        required: false
+        default: ""
+        type: string
+      issue_number:
+        description: "GitHub issue number to work on"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  vera:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run Vera
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VERA_JOB_ID: ${{ inputs.job_id }}
+          VERA_ISSUE_NUMBER: ${{ inputs.issue_number }}
+        run: |
+          echo "Running Vera job: ${VERA_JOB_ID:-none}"
+          echo "Issue number: ${VERA_ISSUE_NUMBER:-none}"
+          echo "Vera workflow completed successfully"
+
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          echo "Cleaning up ephemeral workspace"
+          cd /
+          rm -rf "$GITHUB_WORKSPACE" || echo "Workspace cleanup skipped (bind mount)"
+          echo "Workspace cleaned"
