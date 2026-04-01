@@ -69,8 +69,8 @@ jobs:
           allowed_bots: "vera-staging"
           claude_args: "--allowedTools Bash,Edit,Write,Read,Glob,Grep"
           prompt: |
-            Implement the requirements described in issue #${{ inputs.issue_number }}.
-            Read the issue first, then implement the changes and create a pull request.
+            Implement the requirements described in issue #${{ inputs.issue_number }} in this repository.
+            Read the issue body, implement the changes, commit to a new branch, push, and create a pull request using `gh pr create`.
 
       - name: Report success
         if: success()
