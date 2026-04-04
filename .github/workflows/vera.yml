@@ -46,10 +46,22 @@ jobs:
             echo "::error::Missing required inputs: vera_api_url, job_id, or callback_token"
             exit 1
           fi
-          RESPONSE=$(curl -sf --retry 3 --retry-delay 5 \
+          HTTP_CODE=$(curl -s --retry 3 --retry-delay 5 \
+            -o /tmp/vera_creds.json -w "%{http_code}" \
             -X POST "${VERA_API_URL}/internal/jobs/credentials" \
             -H "Content-Type: application/json" \
             -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\"}")
+          if [ "$HTTP_CODE" = "410" ]; then
+            echo "Job was cancelled by Vera, exiting gracefully"
+            exit 0
+          fi
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Failed to fetch credentials from Vera API (HTTP $HTTP_CODE)"
+            cat /tmp/vera_creds.json 2>/dev/null || true
+            exit 1
+          fi
+          RESPONSE=$(cat /tmp/vera_creds.json)
+          rm -f /tmp/vera_creds.json
           API_KEY=$(echo "$RESPONSE" | jq -r '.anthropic_api_key // empty')
           if [ -z "$API_KEY" ]; then
             echo "::error::Failed to fetch credentials from Vera API"
@@ -105,7 +117,7 @@ jobs:
             claude-code)
               [ -n "$PROXY_API_KEY" ] && export ANTHROPIC_API_KEY="$PROXY_API_KEY"
               [ -n "$PROXY_BASE_URL" ] && export ANTHROPIC_BASE_URL="$PROXY_BASE_URL"
-              claude --dangerously-skip-permissions -p "$PROMPT" $CLAUDE_ARGS $RUNTIME_ARGS
+              claude --dangerously-skip-permissions --verbose -p "$PROMPT" $CLAUDE_ARGS $RUNTIME_ARGS
               ;;
             aider)
               export OPENAI_API_KEY="$PROXY_API_KEY"
