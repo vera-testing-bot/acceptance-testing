@@ -121,7 +121,12 @@ jobs:
         run: |
           case "$RUNTIME" in
             claude-code)
-              [ -n "$PROXY_API_KEY" ] && export ANTHROPIC_API_KEY="$PROXY_API_KEY"
+              if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+                # OAuth token takes priority — unset API key so CLI uses OAuth
+                unset ANTHROPIC_API_KEY
+              elif [ -n "$PROXY_API_KEY" ]; then
+                export ANTHROPIC_API_KEY="$PROXY_API_KEY"
+              fi
               [ -n "$PROXY_BASE_URL" ] && export ANTHROPIC_BASE_URL="$PROXY_BASE_URL"
               claude --dangerously-skip-permissions --verbose -p "$PROMPT" $CLAUDE_ARGS $RUNTIME_ARGS
               ;;
