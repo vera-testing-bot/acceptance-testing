@@ -8,11 +8,6 @@ on:
         required: false
         default: ""
         type: string
-      issue_number:
-        description: "GitHub issue number to work on"
-        required: false
-        default: ""
-        type: string
       callback_token:
         description: "HMAC callback token for Vera API auth"
         required: false
@@ -24,19 +19,21 @@ on:
         default: ""
         type: string
 
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-
 jobs:
   vera:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
 
       - name: Fetch credentials
         id: creds
@@ -60,17 +57,66 @@ jobs:
           fi
           echo "::add-mask::${API_KEY}"
           echo "anthropic_api_key=${API_KEY}" >> "$GITHUB_OUTPUT"
+          # Extract dynamic job config from credential exchange response
+          ISSUE_NUMBER=$(echo "$RESPONSE" | jq -r '.issue_number // empty')
+          echo "issue_number=${ISSUE_NUMBER}" >> "$GITHUB_OUTPUT"
+          PROMPT=$(echo "$RESPONSE" | jq -r '.prompt // empty')
+          # Use heredoc delimiter for multiline prompt values
+          {
+            echo "prompt<<VERA_EOF"
+            echo "$PROMPT"
+            echo "VERA_EOF"
+          } >> "$GITHUB_OUTPUT"
+          CLAUDE_ARGS=$(echo "$RESPONSE" | jq -r '.claude_args // empty')
+          {
+            echo "claude_args<<VERA_ARGS_EOF"
+            echo "$CLAUDE_ARGS"
+            echo "VERA_ARGS_EOF"
+          } >> "$GITHUB_OUTPUT"
+          # Runtime selection fields (backward compat: default to claude-code)
+          RUNTIME=$(echo "$RESPONSE" | jq -r '.runtime // "claude-code"')
+          echo "runtime=${RUNTIME}" >> "$GITHUB_OUTPUT"
+          RUNTIME_ARGS=$(echo "$RESPONSE" | jq -r '.runtime_args // empty')
+          {
+            echo "runtime_args<<VERA_RTARGS_EOF"
+            echo "$RUNTIME_ARGS"
+            echo "VERA_RTARGS_EOF"
+          } >> "$GITHUB_OUTPUT"
+          PROXY_API_KEY=$(echo "$RESPONSE" | jq -r '.proxy_api_key // .anthropic_api_key')
+          echo "::add-mask::${PROXY_API_KEY}"
+          echo "proxy_api_key=${PROXY_API_KEY}" >> "$GITHUB_OUTPUT"
+          PROXY_BASE_URL=$(echo "$RESPONSE" | jq -r '.proxy_base_url // empty')
+          echo "proxy_base_url=${PROXY_BASE_URL}" >> "$GITHUB_OUTPUT"
 
-      - name: Run Claude Code
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ steps.creds.outputs.anthropic_api_key }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          allowed_bots: "vera-staging"
-          claude_args: "--allowedTools Bash,Edit,Write,Read,Glob,Grep"
-          prompt: |
-            Implement the requirements described in issue #${{ inputs.issue_number }} in this repository.
-            Read the issue body, implement the changes, commit to a new branch, push, and create a pull request using `gh pr create`.
+      - name: Run agent
+        env:
+          RUNTIME: ${{ steps.creds.outputs.runtime }}
+          RUNTIME_ARGS: ${{ steps.creds.outputs.runtime_args }}
+          PROXY_API_KEY: ${{ steps.creds.outputs.proxy_api_key }}
+          PROXY_BASE_URL: ${{ steps.creds.outputs.proxy_base_url }}
+          ANTHROPIC_API_KEY: ${{ steps.creds.outputs.anthropic_api_key }}
+          PROMPT: ${{ steps.creds.outputs.prompt }}
+          CLAUDE_ARGS: ${{ steps.creds.outputs.claude_args }}
+          ISSUE_NUMBER: ${{ steps.creds.outputs.issue_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          case "$RUNTIME" in
+            claude-code)
+              export ANTHROPIC_API_KEY="$PROXY_API_KEY"
+              [ -n "$PROXY_BASE_URL" ] && export ANTHROPIC_BASE_URL="$PROXY_BASE_URL"
+              claude -p "$PROMPT" $CLAUDE_ARGS $RUNTIME_ARGS
+              ;;
+            aider)
+              export OPENAI_API_KEY="$PROXY_API_KEY"
+              [ -n "$PROXY_BASE_URL" ] && export OPENAI_API_BASE="$PROXY_BASE_URL"
+              [ -n "$ISSUE_NUMBER" ] && PROMPT="[Issue #${ISSUE_NUMBER}] ${PROMPT}"
+              aider --message "$PROMPT" $RUNTIME_ARGS
+              ;;
+            *)
+              echo "ERROR: Unknown runtime '$RUNTIME'" >&2
+              exit 1
+              ;;
+          esac
 
       - name: Report success
         if: success()
@@ -97,3 +143,11 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"failed\", \"error\": \"Workflow failed\"}" \
             || echo "::warning::Failed to report failure to Vera API"
+
+      - name: Cleanup workspace
+        if: always()
+        run: |
+          echo "Cleaning up ephemeral workspace"
+          cd /
+          rm -rf "$GITHUB_WORKSPACE" || echo "Workspace cleanup skipped (bind mount)"
+          echo "Workspace cleaned"
