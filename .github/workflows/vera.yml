@@ -99,6 +99,7 @@ jobs:
           CLAUDE_ARGS: ${{ steps.creds.outputs.claude_args }}
           ISSUE_NUMBER: ${{ steps.creds.outputs.issue_number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           case "$RUNTIME" in
             claude-code)
