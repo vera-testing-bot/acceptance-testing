@@ -102,9 +102,9 @@ jobs:
         run: |
           case "$RUNTIME" in
             claude-code)
-              export ANTHROPIC_API_KEY="$PROXY_API_KEY"
+              [ -n "$PROXY_API_KEY" ] && export ANTHROPIC_API_KEY="$PROXY_API_KEY"
               [ -n "$PROXY_BASE_URL" ] && export ANTHROPIC_BASE_URL="$PROXY_BASE_URL"
-              claude -p "$PROMPT" $CLAUDE_ARGS $RUNTIME_ARGS
+              claude --dangerously-skip-permissions -p "$PROMPT" $CLAUDE_ARGS $RUNTIME_ARGS
               ;;
             aider)
               export OPENAI_API_KEY="$PROXY_API_KEY"
