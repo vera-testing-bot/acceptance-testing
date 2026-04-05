@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+        run: sudo npm install -g @anthropic-ai/claude-code
 
       - name: Fetch credentials
         id: creds
