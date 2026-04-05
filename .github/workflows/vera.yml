@@ -22,6 +22,8 @@ on:
 jobs:
   vera:
     runs-on: vera-runner
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     timeout-minutes: 60
     permissions:
       contents: write
@@ -30,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
