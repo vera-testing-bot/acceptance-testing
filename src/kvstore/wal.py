@@ -4,6 +4,34 @@ from .exceptions import CorruptedWALError
 _SENTINEL = object()
 
 
+def escape(s):
+    """Escape pipe, backslash, and newline characters for WAL encoding."""
+    return s.replace("\\", "\\\\").replace("|", "\\|").replace("\n", "\\n")
+
+
+def unescape(s):
+    """Reverse the escaping applied by :func:`escape`."""
+    result = []
+    i = 0
+    while i < len(s):
+        if s[i] == "\\" and i + 1 < len(s):
+            nxt = s[i + 1]
+            if nxt == "|":
+                result.append("|")
+            elif nxt == "n":
+                result.append("\n")
+            elif nxt == "\\":
+                result.append("\\")
+            else:
+                result.append(s[i])
+                result.append(nxt)
+            i += 2
+        else:
+            result.append(s[i])
+            i += 1
+    return "".join(result)
+
+
 class WAL:
     """Append-only write-ahead log. Each entry: timestamp|op|key|value\n"""
 
@@ -16,9 +44,8 @@ class WAL:
 
     def append(self, op, key, value=""):
         ts = f"{time.time():.6f}"
-        # Escape pipe characters in key/value to avoid parse ambiguity
-        safe_key = key.replace("\\", "\\\\").replace("|", "\\|").replace("\n", "\\n")
-        safe_value = value.replace("\\", "\\\\").replace("|", "\\|").replace("\n", "\\n")
+        safe_key = escape(key)
+        safe_value = escape(value)
         line = f"{ts}|{op}|{safe_key}|{safe_value}\n"
         self._file.write(line)
         self._file.flush()
@@ -28,25 +55,7 @@ class WAL:
 
     @staticmethod
     def _unescape(s):
-        result = []
-        i = 0
-        while i < len(s):
-            if s[i] == "\\" and i + 1 < len(s):
-                nxt = s[i + 1]
-                if nxt == "|":
-                    result.append("|")
-                elif nxt == "n":
-                    result.append("\n")
-                elif nxt == "\\":
-                    result.append("\\")
-                else:
-                    result.append(s[i])
-                    result.append(nxt)
-                i += 2
-            else:
-                result.append(s[i])
-                i += 1
-        return "".join(result)
+        return unescape(s)
 
     @classmethod
     def replay(cls, path):

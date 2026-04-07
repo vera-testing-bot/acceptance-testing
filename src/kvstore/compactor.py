@@ -1,7 +1,7 @@
 import os
 import time
 
-from .wal import WAL
+from .wal import WAL, escape
 
 
 def compact(wal_path):
@@ -13,13 +13,9 @@ def compact(wal_path):
         # Write a single SET entry per surviving key using a fixed timestamp
         ts = f"{time.time():.6f}"
         for key, value in state.items():
-            safe_key = _escape(key)
-            safe_value = _escape(value)
+            safe_key = escape(key)
+            safe_value = escape(value)
             f.write(f"{ts}|{WAL.OP_SET}|{safe_key}|{safe_value}\n")
 
     os.replace(tmp_path, wal_path)
     return len(state)
-
-
-def _escape(s):
-    return s.replace("\\", "\\\\").replace("|", "\\|").replace("\n", "\\n")

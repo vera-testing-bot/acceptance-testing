@@ -8,21 +8,21 @@ DEFAULT_PATH = "kvstore.wal"
 
 def usage():
     print("Usage:")
-    print("  python -m kvstore get KEY [--store PATH]")
-    print("  python -m kvstore set KEY VALUE [--store PATH]")
-    print("  python -m kvstore compact [--store PATH]")
+    print("  python -m kvstore get KEY [--db PATH]")
+    print("  python -m kvstore set KEY VALUE [--db PATH]")
+    print("  python -m kvstore compact [--db PATH]")
     sys.exit(1)
 
 
 def main():
     args = list(sys.argv[1:])
 
-    # Parse optional --store flag
+    # Parse optional --db flag
     store_path = DEFAULT_PATH
-    if "--store" in args:
-        idx = args.index("--store")
+    if "--db" in args:
+        idx = args.index("--db")
         if idx + 1 >= len(args):
-            print("Error: --store requires a path argument", file=sys.stderr)
+            print("Error: --db requires a path argument", file=sys.stderr)
             sys.exit(1)
         store_path = args[idx + 1]
         args = args[:idx] + args[idx + 2:]
