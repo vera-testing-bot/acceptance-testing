@@ -1,4 +1,6 @@
-from src.math_helpers import multiply
+import pytest
+
+from src.math_helpers import divide, multiply
 
 
 def test_multiply_positive():
@@ -15,3 +17,20 @@ def test_multiply_negative():
 
 def test_multiply_floats():
     assert multiply(2.5, 4) == 10.0
+
+
+def test_divide_basic():
+    assert divide(10, 2) == 5.0
+
+
+def test_divide_negative():
+    assert divide(-9, 3) == -3.0
+
+
+def test_divide_floats():
+    assert divide(7.5, 2.5) == 3.0
+
+
+def test_divide_by_zero():
+    with pytest.raises(ValueError):
+        divide(5, 0)
