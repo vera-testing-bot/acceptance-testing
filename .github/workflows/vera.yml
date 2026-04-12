@@ -171,7 +171,13 @@ jobs:
               else
                 FULL_PROMPT="$PROMPT"
               fi
-              claude --dangerously-skip-permissions --verbose -p "$FULL_PROMPT" $CLAUDE_ARGS $RUNTIME_ARGS
+              # AGENT-NOTE: --dangerously-skip-permissions requires a prior interactive
+              # acceptance on the host, which fails in fresh GHA runners. Use an explicit
+              # --allowed-tools list instead (broad allowance suitable for an autonomous
+              # code-implementation agent).
+              claude \
+                --allowed-tools "Bash,Edit,Write,MultiEdit,NotebookEdit,Read,Glob,Grep,Task,TodoWrite,WebFetch,WebSearch" \
+                --verbose -p "$FULL_PROMPT" $CLAUDE_ARGS $RUNTIME_ARGS
               ;;
             *)
               echo "ERROR: Unknown runtime '$RUNTIME'" >&2
@@ -308,11 +314,3 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"failed\", \"error\": \"Workflow failed\"}" \
             || echo "::warning::Failed to report failure to Vera API"
-
-      - name: Cleanup workspace
-        if: always()
-        run: |
-          echo "Cleaning up ephemeral workspace"
-          cd /
-          find "$GITHUB_WORKSPACE" -mindepth 1 -delete 2>/dev/null || echo "Workspace cleanup skipped (bind mount)"
-          echo "Workspace cleaned"
