@@ -1,3 +1,16 @@
+# vera-template-version: 2026.04.15
+# DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
+#
+# AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
+# job-type-specific logic, runtime-specific branches, tool allowlists, or
+# business logic of any kind. All of that lives server-side in:
+#   - src/vera/github/bootloader_script.py  (exec_script assembly)
+#   - src/vera/github/job_api.py             (credential exchange + callback)
+#   - src/vera/models/job.py                 (job state)
+# See docs/spec/workflow-template.md "Bootloader responsibility" for the
+# contract this file must satisfy. Because this file is installed into every
+# customer repository, every edit forces re-installation across all customer
+# installs — keep it thin and stable. Changes trigger a CI guard workflow.
 name: Vera
 
 on:
@@ -34,8 +47,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Fetch credentials
-        id: creds
+      - name: Fetch job package
         env:
           VERA_JOB_ID: ${{ inputs.job_id }}
           VERA_CALLBACK_TOKEN: ${{ inputs.callback_token }}
@@ -61,241 +73,45 @@ jobs:
           fi
           RESPONSE=$(cat /tmp/vera_creds.json)
           rm -f /tmp/vera_creds.json
-          # Validate the credential response contains expected fields.
-          # The raw anthropic_api_key is intentionally NOT extracted — upstream
-          # provider keys must never be visible to callers (llm-proxy.auth.keys-hidden).
-          RESPONSE_STATUS=$(echo "$RESPONSE" | jq -r '.status // empty')
-          if [ "$RESPONSE_STATUS" != "ok" ]; then
-            echo "::error::Failed to fetch credentials from Vera API (status: ${RESPONSE_STATUS})"
+          if [ "$(echo "$RESPONSE" | jq -r '.status // empty')" != "ok" ]; then
+            echo "::error::Credential exchange returned a non-ok status"
             exit 1
           fi
-          # Extract dynamic job config from credential exchange response
-          ISSUE_NUMBER=$(echo "$RESPONSE" | jq -r '.issue_number // empty')
-          echo "issue_number=${ISSUE_NUMBER}" >> "$GITHUB_OUTPUT"
-          PR_NUMBER=$(echo "$RESPONSE" | jq -r '.pr_number // empty')
-          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
-          PROMPT=$(echo "$RESPONSE" | jq -r '.prompt // empty')
-          # Use heredoc delimiter for multiline prompt values
-          {
-            echo "prompt<<VERA_EOF"
-            echo "$PROMPT"
-            echo "VERA_EOF"
-          } >> "$GITHUB_OUTPUT"
-          CLAUDE_ARGS=$(echo "$RESPONSE" | jq -r '.claude_args // empty')
-          {
-            echo "claude_args<<VERA_ARGS_EOF"
-            echo "$CLAUDE_ARGS"
-            echo "VERA_ARGS_EOF"
-          } >> "$GITHUB_OUTPUT"
-          # Runtime selection fields (backward compat: default to claude-code)
-          RUNTIME=$(echo "$RESPONSE" | jq -r '.runtime // "claude-code"')
-          echo "runtime=${RUNTIME}" >> "$GITHUB_OUTPUT"
-          RUNTIME_ARGS=$(echo "$RESPONSE" | jq -r '.runtime_args // empty')
-          {
-            echo "runtime_args<<VERA_RTARGS_EOF"
-            echo "$RUNTIME_ARGS"
-            echo "VERA_RTARGS_EOF"
-          } >> "$GITHUB_OUTPUT"
-          PROXY_API_KEY=$(echo "$RESPONSE" | jq -r '.proxy_api_key // empty')
-          echo "::add-mask::${PROXY_API_KEY}"
-          echo "proxy_api_key=${PROXY_API_KEY}" >> "$GITHUB_OUTPUT"
-          PROXY_BASE_URL=$(echo "$RESPONSE" | jq -r '.proxy_base_url // empty')
-          echo "proxy_base_url=${PROXY_BASE_URL}" >> "$GITHUB_OUTPUT"
-          GITHUB_APP_TOKEN=$(echo "$RESPONSE" | jq -r '.github_token // empty')
-          if [ -n "$GITHUB_APP_TOKEN" ]; then
-            echo "::add-mask::${GITHUB_APP_TOKEN}"
-            echo "github_app_token=${GITHUB_APP_TOKEN}" >> "$GITHUB_OUTPUT"
-          fi
-          JOB_TYPE=$(echo "$RESPONSE" | jq -r '.job_type // empty')
-          echo "job_type=${JOB_TYPE}" >> "$GITHUB_OUTPUT"
-          SPEC_REVIEW_PAUSE_URL=$(echo "$RESPONSE" | jq -r '.spec_review_pause_url // empty')
-          echo "spec_review_pause_url=${SPEC_REVIEW_PAUSE_URL}" >> "$GITHUB_OUTPUT"
-          # spec_content is set by Vera after the spec review window closes (Phase 2).
-          # When non-empty, the agent has an approved spec to implement.
-          SPEC_CONTENT=$(echo "$RESPONSE" | jq -r '.spec_content // empty')
-          {
-            echo "spec_content<<VERA_SPEC_EOF"
-            echo "$SPEC_CONTENT"
-            echo "VERA_SPEC_EOF"
-          } >> "$GITHUB_OUTPUT"
+          # Mask every secret BEFORE writing it to $GITHUB_ENV.
+          echo "$RESPONSE" | jq -r '.secrets // {} | to_entries[] | "\(.key)=\(.value)"' > /tmp/vera_secrets.env
+          while IFS='=' read -r k v; do
+            [ -z "$k" ] && continue
+            echo "::add-mask::${v}"
+            echo "${k}=${v}" >> "$GITHUB_ENV"
+          done < /tmp/vera_secrets.env
+          rm -f /tmp/vera_secrets.env
+          # Non-secret env vars (verbatim).
+          echo "$RESPONSE" | jq -r '.env // {} | to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
+          # Opaque exec_script — the bootloader does not parse it.
+          echo "$RESPONSE" | jq -r '.exec_script // empty' > /tmp/vera_exec.sh
+          chmod +x /tmp/vera_exec.sh
 
-      - name: Configure git identity
-        if: steps.creds.outputs.github_app_token != ''
+      - name: Run
         env:
-          GITHUB_APP_TOKEN: ${{ steps.creds.outputs.github_app_token }}
-        run: |
-          # Reconfigure the git remote to use the App installation token so
-          # that commits and PRs appear as the correct bot identity rather than
-          # the default github-actions[bot] identity set by actions/checkout.
-          REPO_URL="https://x-access-token:${GITHUB_APP_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git remote set-url origin "$REPO_URL"
-          # Derive the bot identity from the GitHub App metadata (works for both
-          # vera[bot] in production and vera-staging[bot] in staging).
-          # GitHub bot noreply addresses require the numeric ID prefix to link
-          # commits to the bot's profile.
-          BOT_INFO=$(gh api /app 2>/dev/null || echo '{}')
-          BOT_ID=$(echo "$BOT_INFO" | jq -r '.id // empty')
-          BOT_SLUG=$(echo "$BOT_INFO" | jq -r '.slug // "vera-staging"')
-          if [ -n "$BOT_ID" ]; then
-            git config user.email "${BOT_ID}+${BOT_SLUG}[bot]@users.noreply.github.com"
-          else
-            git config user.email "${BOT_SLUG}[bot]@users.noreply.github.com"
-          fi
-          git config user.name "${BOT_SLUG}[bot]"
-
-      - name: Run agent
-        env:
-          RUNTIME: ${{ steps.creds.outputs.runtime }}
-          RUNTIME_ARGS: ${{ steps.creds.outputs.runtime_args }}
-          PROXY_API_KEY: ${{ steps.creds.outputs.proxy_api_key }}
-          PROXY_BASE_URL: ${{ steps.creds.outputs.proxy_base_url }}
-          PROMPT: ${{ steps.creds.outputs.prompt }}
-          CLAUDE_ARGS: ${{ steps.creds.outputs.claude_args }}
-          ISSUE_NUMBER: ${{ steps.creds.outputs.issue_number }}
-          SPEC_CONTENT: ${{ steps.creds.outputs.spec_content }}
-          GH_TOKEN: ${{ steps.creds.outputs.github_app_token || secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ steps.creds.outputs.github_app_token || secrets.GITHUB_TOKEN }}
-        run: |
-          case "$RUNTIME" in
-            claude-code)
-              if [ -z "$PROXY_API_KEY" ] || [ -z "$PROXY_BASE_URL" ]; then
-                echo "::error::Proxy credentials missing — PROXY_API_KEY and PROXY_BASE_URL are required"
-                exit 1
-              fi
-              export ANTHROPIC_API_KEY="$PROXY_API_KEY"
-              export ANTHROPIC_BASE_URL="$PROXY_BASE_URL"
-              # Phase 2 (spec review complete): prepend the approved spec content
-              # to the prompt so the agent implements from the reviewed spec.
-              if [ -n "$SPEC_CONTENT" ]; then
-                FULL_PROMPT="$(printf '%s\n\n## Approved spec (post-review)\n\nThe following spec was reviewed and approved. Implement it exactly:\n\n%s' "$PROMPT" "$SPEC_CONTENT")"
-              else
-                FULL_PROMPT="$PROMPT"
-              fi
-              # AGENT-NOTE: --dangerously-skip-permissions requires a prior interactive
-              # acceptance on the host, which fails in fresh GHA runners. Use an explicit
-              # --allowed-tools list instead (broad allowance suitable for an autonomous
-              # code-implementation agent).
-              claude \
-                --allowed-tools "Bash,Edit,Write,MultiEdit,NotebookEdit,Read,Glob,Grep,Task,TodoWrite,WebFetch,WebSearch" \
-                --verbose -p "$FULL_PROMPT" $CLAUDE_ARGS $RUNTIME_ARGS
-              ;;
-            *)
-              echo "ERROR: Unknown runtime '$RUNTIME'" >&2
-              exit 1
-              ;;
-          esac
-
-      - name: Spec review pause
-        id: spec_pause
-        if: >-
-          success() &&
-          steps.creds.outputs.job_type == 'implement' &&
-          steps.creds.outputs.spec_review_pause_url != '' &&
-          steps.creds.outputs.spec_content == ''
-        env:
-          SPEC_REVIEW_PAUSE_URL: ${{ steps.creds.outputs.spec_review_pause_url }}
-          GH_TOKEN: ${{ steps.creds.outputs.github_app_token || secrets.GITHUB_TOKEN }}
-          ISSUE_NUMBER: ${{ steps.creds.outputs.issue_number }}
-        run: |
-          # Call Vera to pause this job for the spec review window.
-          # Only runs in Phase 1 (no spec_content yet).
-          # If paused=true, the workflow exits here (success) without sending
-          # the completion callback — Vera will re-dispatch a new workflow run
-          # after the review window closes (or @vera go is issued).
-          # If paused=false (spec_review_minutes=0), the workflow continues.
-
-          # Find the latest spec comment posted by the bot on this issue so
-          # the resume handler can fetch the (possibly edited) spec content.
-          SPEC_COMMENT_ID=""
-          if [ -n "$ISSUE_NUMBER" ]; then
-            SPEC_COMMENT_ID=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}/comments?per_page=100&direction=desc" \
-              --jq '[.[] | select(.user.login | test("^(vera|vera-staging)\\[bot\\]$")) | select(.body | test("## (Spec|Implementation Plan)")) | .id] | first // empty' 2>/dev/null || true)
-          fi
-
-          # Build JSON body with spec_comment_id if found (use jq for safe JSON).
-          if [ -n "$SPEC_COMMENT_ID" ]; then
-            BODY=$(jq -n --argjson id "$SPEC_COMMENT_ID" '{"spec_comment_id":$id}')
-          else
-            BODY="{}"
-          fi
-
-          HTTP_CODE=$(curl -s --retry 3 --retry-delay 5 \
-            -o /tmp/spec_pause_resp.json -w "%{http_code}" \
-            -X POST "${SPEC_REVIEW_PAUSE_URL}" \
-            -H "Content-Type: application/json" \
-            -d "$BODY")
-          RESPONSE=$(cat /tmp/spec_pause_resp.json 2>/dev/null || echo '{}')
-          rm -f /tmp/spec_pause_resp.json
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::warning::Spec review pause call failed (HTTP $HTTP_CODE) — continuing without pause"
-            echo "paused=false" >> "$GITHUB_OUTPUT"
-          else
-            PAUSED=$(echo "$RESPONSE" | jq -r '.paused // false')
-            echo "paused=${PAUSED}" >> "$GITHUB_OUTPUT"
-            if [ "$PAUSED" = "true" ]; then
-              RESUME_IN=$(echo "$RESPONSE" | jq -r '.resume_in_minutes // "?"')
-              echo "Spec review window started. Job paused for ${RESUME_IN} minutes (or until @vera go)."
-              echo "Vera will re-dispatch the workflow when the review window closes."
-            fi
-          fi
-
-      - name: Exit for spec review
-        if: success() && steps.spec_pause.outputs.paused == 'true'
-        run: |
-          echo "Exiting workflow — job is paused for spec review."
-          exit 0
-
-      - name: Detect review outcome
-        id: review_outcome
-        if: >-
-          success() &&
-          steps.creds.outputs.job_type == 'review' &&
-          steps.spec_pause.outputs.paused != 'true'
-        env:
-          GH_TOKEN: ${{ steps.creds.outputs.github_app_token || secrets.GITHUB_TOKEN }}
-          ISSUE_NUMBER: ${{ steps.creds.outputs.issue_number }}
-          PR_NUMBER: ${{ steps.creds.outputs.pr_number }}
-        run: |
-          # Check if the review agent posted a CHANGES_REQUESTED review on
-          # this PR. If so, the callback must NOT trigger implicit approval.
-          # Prefer pr_number (the actual PR) over issue_number (may be the
-          # original issue being worked on, not the PR to review).
-          # Also detect COMMENT reviews with the vera:changes-requested marker
-          # (used when GitHub blocks REQUEST_CHANGES on bot-authored PRs).
-          OUTCOME="approve"
-          TARGET="${PR_NUMBER:-$ISSUE_NUMBER}"
-          if [ -n "$TARGET" ]; then
-            # Derive the bot slug dynamically so this works in both staging and production.
-            BOT_SLUG=$(gh api /app --jq '.slug' 2>/dev/null || echo 'vera-staging')
-            LATEST_REVIEW=$(gh pr view "$TARGET" --json reviews \
-              --jq '[.reviews[] | select(.author.login == "'"${BOT_SLUG}"'[bot]" or .author.login == "github-actions[bot]")] | last' 2>/dev/null || true)
-            if [ -n "$LATEST_REVIEW" ]; then
-              LATEST_STATE=$(echo "$LATEST_REVIEW" | jq -r '.state // empty')
-              LATEST_BODY=$(echo "$LATEST_REVIEW" | jq -r '.body // empty')
-              if [ "$LATEST_STATE" = "CHANGES_REQUESTED" ]; then
-                OUTCOME="request_changes"
-              elif [ "$LATEST_STATE" = "COMMENTED" ] && echo "$LATEST_BODY" | grep -qF '<!-- vera:changes-requested -->'; then
-                # Review agent posted a COMMENT fallback (REQUEST_CHANGES was blocked
-                # on bot-authored PR) but included the marker to signal real issues.
-                OUTCOME="request_changes"
-              fi
-            fi
-          fi
-          echo "outcome=${OUTCOME}" >> "$GITHUB_OUTPUT"
+          GH_TOKEN: ${{ env.GITHUB_APP_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ env.GITHUB_APP_TOKEN || secrets.GITHUB_TOKEN }}
+        run: bash /tmp/vera_exec.sh
 
       - name: Report success
-        if: success() && steps.spec_pause.outputs.paused != 'true'
+        if: success()
         env:
           VERA_JOB_ID: ${{ inputs.job_id }}
           VERA_CALLBACK_TOKEN: ${{ inputs.callback_token }}
           VERA_API_URL: ${{ inputs.vera_api_url }}
-          REVIEW_OUTCOME: ${{ steps.review_outcome.outputs.outcome }}
         run: |
-          PAYLOAD="{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"completed\""
-          if [ -n "$REVIEW_OUTCOME" ]; then
-            PAYLOAD="${PAYLOAD}, \"review_outcome\": \"${REVIEW_OUTCOME}\""
+          OUTCOME_FIELD=""
+          if [ -f /tmp/vera_outcome.json ]; then
+            OUTCOME_JSON=$(jq -c . /tmp/vera_outcome.json 2>/dev/null || echo "")
+            if [ -n "$OUTCOME_JSON" ]; then
+              OUTCOME_FIELD=", \"outcome\": ${OUTCOME_JSON}"
+            fi
           fi
-          PAYLOAD="${PAYLOAD}}"
+          PAYLOAD="{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"completed\"${OUTCOME_FIELD}}"
           curl -sf --retry 3 --retry-delay 5 \
             -X POST "${VERA_API_URL}/internal/jobs/callback" \
             -H "Content-Type: application/json" \
