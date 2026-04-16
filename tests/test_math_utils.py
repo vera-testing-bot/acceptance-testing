@@ -1,4 +1,4 @@
-from src.math_utils import add
+from src.math_utils import add, clamp
 
 
 def test_add_positive_numbers():
@@ -15,3 +15,23 @@ def test_add_zero():
 
 def test_add_floats():
     assert add(1.5, 2.5) == 4.0
+
+
+def test_clamp_within_range():
+    assert clamp(5, 1, 10) == 5
+
+
+def test_clamp_below_min():
+    assert clamp(-1, 0, 10) == 0
+
+
+def test_clamp_above_max():
+    assert clamp(15, 0, 10) == 10
+
+
+def test_clamp_at_min():
+    assert clamp(0, 0, 10) == 0
+
+
+def test_clamp_at_max():
+    assert clamp(10, 0, 10) == 10
