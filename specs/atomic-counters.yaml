@@ -1,0 +1,26 @@
+title: "feat(store): add atomic counter operations"
+labels:
+  - "vera:ready"
+body: |
+  Add atomic increment and decrement operations to KVStore so callers can
+  manage integer counters without a read-modify-write race.
+
+  ## Requirements
+
+  - `increment(key: str, delta: int = 1) -> int` increments the stored integer
+    value by `delta` and returns the new value; if the key does not exist it is
+    initialised to `0` before incrementing
+  - `decrement(key: str, delta: int = 1) -> int` decrements the stored integer
+    value by `delta` and returns the new value; same initialisation semantics
+  - Both operations raise `ValueError` when the existing value cannot be
+    interpreted as an integer
+  - Each call is written to the WAL as a `SET` with the resulting integer value
+    so the counter survives a restart
+
+  ## Acceptance criteria
+
+  - A fresh key incremented twice by 1 returns 1 then 2
+  - `increment("hits", delta=5)` on a key holding `"10"` returns `15`
+  - `decrement("hits")` on a key holding `"3"` returns `2`
+  - Calling `increment` on a key with a non-integer value raises `ValueError`
+  - After a restart the counter retains its last value

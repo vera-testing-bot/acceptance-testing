@@ -1,0 +1,29 @@
+title: "feat(store): add snapshot export and import"
+labels:
+  - "vera:ready"
+body: |
+  Add `export_snapshot()` and `import_snapshot()` methods to KVStore so the
+  entire store can be serialised to a plain dict and restored from one.
+
+  ## Requirements
+
+  - `export_snapshot() -> dict[str, str]` returns a copy of all current
+    key-value pairs; the returned dict must not be a live reference to internal
+    state
+  - `import_snapshot(data: dict[str, str])` replaces the entire store contents
+    with `data`; all existing keys not present in `data` are removed
+  - `import_snapshot` writes the new state to the WAL (one SET per key)
+    followed by DELETE entries for any keys that were removed, so the snapshot
+    survives a restart
+  - `import_snapshot` raises `TypeError` when `data` is not a dict, or when
+    any key or value is not a string
+
+  ## Acceptance criteria
+
+  - `export_snapshot()` on an empty store returns `{}`
+  - After `set("x", "1"); set("y", "2")`, `export_snapshot()` returns
+    `{"x": "1", "y": "2"}`
+  - Mutating the returned dict does not affect the store
+  - After `import_snapshot({"a": "alpha"})` on a store that had `{"x": "1"}`,
+    `get("a")` returns `"alpha"` and `get("x")` raises `KeyNotFoundError`
+  - After a restart the imported snapshot is the current store state

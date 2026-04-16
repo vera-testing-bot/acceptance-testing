@@ -1,0 +1,24 @@
+title: "feat(store): add atomic key rename"
+labels:
+  - "vera:ready"
+body: |
+  Add a `rename(old_key, new_key)` method to KVStore that atomically moves a
+  value from one key to another.
+
+  ## Requirements
+
+  - `rename(old_key: str, new_key: str)` copies the value of `old_key` to
+    `new_key` and deletes `old_key`, all as a single logical operation
+  - Raises `KeyNotFoundError` when `old_key` does not exist
+  - If `new_key` already exists its value is silently overwritten
+  - Both the DELETE of `old_key` and the SET of `new_key` are written to the
+    WAL so the rename survives a restart
+
+  ## Acceptance criteria
+
+  - After `set("a", "hello"); rename("a", "b")`, `get("b")` returns `"hello"`
+    and `get("a")` raises `KeyNotFoundError`
+  - `rename("missing", "b")` raises `KeyNotFoundError`
+  - `rename("a", "b")` when `"b"` already exists overwrites it with `"a"`'s
+    value
+  - After a restart the renamed key is present and the old key is absent
