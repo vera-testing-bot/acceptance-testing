@@ -1,0 +1,21 @@
+title: "feat(store): add TTL support for keys"
+labels:
+  - "vera:ready"
+body: |
+  Add time-to-live (TTL) support to KVStore so keys can expire automatically.
+
+  ## Requirements
+
+  - `set(key, value, ttl=None)` accepts an optional TTL in seconds (float or int)
+  - Keys with a TTL are automatically treated as absent once the TTL has elapsed
+  - `get()` on an expired key raises `KeyNotFoundError`
+  - `keys()` excludes expired keys
+  - TTL metadata is persisted in the WAL so expiry survives restart
+  - `delete()` on an expired key raises `KeyNotFoundError`
+
+  ## Acceptance criteria
+
+  - Setting a key with `ttl=0.1` and sleeping 0.2 s causes `get` to raise `KeyNotFoundError`
+  - Setting a key with `ttl=60` and reading immediately succeeds
+  - After a restart the TTL is still enforced based on the original set timestamp
+  - `keys()` does not include expired keys

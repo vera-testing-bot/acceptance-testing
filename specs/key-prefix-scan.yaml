@@ -1,0 +1,21 @@
+title: "feat(store): add key prefix scan"
+labels:
+  - "vera:ready"
+body: |
+  Add a `scan(prefix)` method to KVStore that returns all keys starting with a
+  given prefix string.
+
+  ## Requirements
+
+  - `scan(prefix: str) -> list[str]` returns all live keys that begin with `prefix`
+  - Returns an empty list when no keys match
+  - Deleted keys are excluded
+  - Expired keys (if TTL is implemented) are excluded
+  - Order of returned keys is unspecified
+
+  ## Acceptance criteria
+
+  - After `set("user:1", …)`, `set("user:2", …)`, `set("order:1", …)`,
+    `scan("user:")` returns `["user:1", "user:2"]` (in any order)
+  - `scan("nonexistent:")` returns `[]`
+  - Deleting `user:1` then calling `scan("user:")` returns only `["user:2"]`

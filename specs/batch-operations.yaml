@@ -1,0 +1,22 @@
+title: "feat(store): add batch get/set/delete operations"
+labels:
+  - "vera:ready"
+body: |
+  Add batch operations to KVStore to allow setting, getting, and deleting
+  multiple keys in a single call.
+
+  ## Requirements
+
+  - `set_many(items: dict)` writes all key-value pairs atomically (all succeed or none)
+  - `get_many(keys: list) -> dict` returns a mapping of key → value for all requested keys;
+    raises `KeyNotFoundError` for the first missing key
+  - `delete_many(keys: list)` deletes all specified keys;
+    raises `KeyNotFoundError` for the first missing key
+  - All three operations are reflected in the WAL as individual entries
+
+  ## Acceptance criteria
+
+  - `set_many({"a": "1", "b": "2"})` followed by `get_many(["a", "b"])` returns `{"a": "1", "b": "2"}`
+  - `get_many` on a list that includes a missing key raises `KeyNotFoundError`
+  - `delete_many` removes all listed keys; subsequent `get` calls raise `KeyNotFoundError`
+  - After a restart all batch-written keys are still present
