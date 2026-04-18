@@ -4,6 +4,18 @@ A Python library of basic arithmetic and numeric utility functions with full tes
 
 ## Arithmetic
 
+#### 🚧 Power/Exponentiation
+
+Raise a number to a power.
+
+**Done when:**
+- `power(base, exp)` returns `base ** exp` for positive integers <!-- slug: math-operations.arithmetic.power-integers -->
+- `power(base, exp)` handles `exp = 0` returning 1 <!-- slug: math-operations.arithmetic.power-zero -->
+- `power(base, exp)` raises `ValueError` for negative exponents <!-- slug: math-operations.arithmetic.power-negative-exp -->
+- Tests are included in the test suite <!-- slug: math-operations.arithmetic.power-has-tests -->
+
+---
+
 #### ✅ Subtraction
 
 Subtract one number from another.
@@ -14,7 +26,7 @@ Subtract one number from another.
 
 ---
 
-#### 🚧 Addition
+#### ✅ Addition
 
 Add two numbers together.
 
