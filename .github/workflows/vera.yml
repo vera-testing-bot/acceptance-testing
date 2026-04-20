@@ -111,12 +111,21 @@ jobs:
               OUTCOME_FIELD=", \"outcome\": ${OUTCOME_JSON}"
             fi
           fi
-          PAYLOAD="{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"completed\"${OUTCOME_FIELD}}"
+          STATUS="completed"
+          ERROR_FIELD=""
+          if [ -f /tmp/vera_agent_exit_code ]; then
+            AGENT_EC=$(tr -d '[:space:]' < /tmp/vera_agent_exit_code)
+            if [ -n "$AGENT_EC" ] && [ "$AGENT_EC" != "0" ]; then
+              STATUS="failed"
+              ERROR_FIELD=", \"error\": \"Agent exited with code ${AGENT_EC}\""
+            fi
+          fi
+          PAYLOAD="{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"${STATUS}\"${OUTCOME_FIELD}${ERROR_FIELD}}"
           curl -sf --retry 3 --retry-delay 5 \
             -X POST "${VERA_API_URL}/internal/jobs/callback" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
-            || echo "::warning::Failed to report success to Vera API"
+            || echo "::warning::Failed to report callback to Vera API"
 
       - name: Report failure
         if: failure()
