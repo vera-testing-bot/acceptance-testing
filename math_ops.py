@@ -19,3 +19,22 @@ def power(base, exp):
     if base == 0 and exp < 0:
         raise ValueError("Cannot raise 0 to a negative power")
     return base ** exp
+
+
+def divide(a, b):
+    """
+    Divide one number by another with safe zero-division handling.
+
+    Args:
+        a: The dividend (numerator)
+        b: The divisor (denominator)
+
+    Returns:
+        a / b for non-zero b
+
+    Raises:
+        ValueError: If b is zero
+    """
+    if b == 0:
+        raise ValueError("Cannot divide by zero")
+    return a / b
