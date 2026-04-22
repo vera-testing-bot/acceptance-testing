@@ -1,4 +1,4 @@
-from src.math_utils import add
+from src.math_utils import add, negate
 
 
 def test_add_positive_numbers():
@@ -15,3 +15,15 @@ def test_add_zero():
 
 def test_add_floats():
     assert add(1.5, 2.5) == 4.0
+
+
+def test_negate_positive():
+    assert negate(5) == -5
+
+
+def test_negate_negative():
+    assert negate(-2) == 2
+
+
+def test_negate_zero():
+    assert negate(0) == 0
