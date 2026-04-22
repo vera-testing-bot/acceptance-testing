@@ -1,4 +1,4 @@
-from src.math_utils import add, negate
+from src.math_utils import add, negate, is_even
 
 
 def test_add_positive_numbers():
@@ -27,3 +27,15 @@ def test_negate_negative():
 
 def test_negate_zero():
     assert negate(0) == 0
+
+
+def test_is_even_true():
+    assert is_even(2) is True
+
+
+def test_is_even_false():
+    assert is_even(3) is False
+
+
+def test_is_even_zero():
+    assert is_even(0) is True
