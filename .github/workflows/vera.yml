@@ -1,4 +1,4 @@
-# vera-template-version: 2026.04.15
+# vera-template-version: 2026.04.24
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -11,6 +11,12 @@
 # contract this file must satisfy. Because this file is installed into every
 # customer repository, every edit forces re-installation across all customer
 # installs — keep it thin and stable. Changes trigger a CI guard workflow.
+#
+# AGENT-NOTE: After editing this template, run
+#   `GH_TOKEN=$(gh auth token) uv run python scripts/ci/check_workflow_template_sync.py`
+# to confirm the deployed copy in vera-testing-bot/acceptance-testing is in
+# sync. CI will fail on push-to-main if it isn't. Incident:
+# docs/failures/2026-04/23-workflow-template-drift.md
 name: Vera
 
 on:
