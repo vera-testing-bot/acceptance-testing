@@ -38,3 +38,26 @@ def divide(a, b):
     if b == 0:
         raise ValueError("Cannot divide by zero")
     return a / b
+
+
+def calculate_e():
+    """
+    Calculate Euler's number (e) to 6 decimal digits without using math functions.
+
+    Uses the Taylor series expansion:
+    e = 1 + 1/1! + 1/2! + 1/3! + ...
+
+    Returns:
+        An approximation of e accurate to 6 decimal places.
+    """
+    e = 1.0
+    factorial = 1.0
+    n = 1
+    while True:
+        factorial *= n
+        term = 1.0 / factorial
+        if term < 1e-7:
+            break
+        e += term
+        n += 1
+    return e
