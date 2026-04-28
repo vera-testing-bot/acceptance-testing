@@ -1,4 +1,4 @@
-from math_ops import multiply, power, divide
+from math_ops import multiply, power, divide, calculate_e
 import pytest
 
 
@@ -60,3 +60,18 @@ def test_divide_negative():
 def test_divide_by_zero_raises():
     with pytest.raises(ValueError, match="Cannot divide by zero"):
         divide(5, 0)
+
+
+# Calculate e tests
+def test_calculate_e_accuracy():
+    # e to 6 decimal places is 2.718282
+    result = calculate_e()
+    assert round(result, 6) == 2.718282
+
+
+def test_calculate_e_no_math_module():
+    # Ensure the function works without importing math
+    import math_ops
+    assert hasattr(math_ops, 'calculate_e')
+    assert calculate_e() > 2.718280
+    assert calculate_e() < 2.718282
