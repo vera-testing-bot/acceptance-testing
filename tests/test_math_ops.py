@@ -1,4 +1,4 @@
-from math_ops import multiply, power, divide, calculate_e
+from math_ops import multiply, power, divide, absolute, calculate_e
 import pytest
 
 
@@ -60,6 +60,19 @@ def test_divide_negative():
 def test_divide_by_zero_raises():
     with pytest.raises(ValueError, match="Cannot divide by zero"):
         divide(5, 0)
+
+
+# Absolute value tests
+def test_absolute_positive():
+    assert absolute(7) == 7
+
+
+def test_absolute_negative():
+    assert absolute(-7) == 7
+
+
+def test_absolute_zero():
+    assert absolute(0) == 0
 
 
 # Calculate e tests

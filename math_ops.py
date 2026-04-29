@@ -40,6 +40,13 @@ def divide(a, b):
     return a / b
 
 
+def absolute(n):
+    """Return the absolute value of n."""
+    if n < 0:
+        return -n
+    return n
+
+
 def calculate_e():
     """
     Calculate Euler's number (e) to 6 decimal digits without using math functions.
