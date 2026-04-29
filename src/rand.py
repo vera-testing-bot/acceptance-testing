@@ -205,3 +205,24 @@ def random_bytes(n: int) -> bytes:
         value = int(rand() * (1 << 64))
         result.extend(value.to_bytes(8, byteorder='big'))
     return bytes(result[:n])
+
+
+def random_point_in_sphere(n: int) -> list[float]:
+    """
+    Generate a random point inside an n-dimensional unit sphere.
+
+    Args:
+        n: The number of dimensions. Must be greater than zero.
+
+    Returns:
+        A list of n coordinates representing a point uniformly sampled
+        from the n-dimensional unit sphere centered at the origin.
+    """
+    if n <= 0:
+        raise ValueError("n must be greater than 0")
+
+    while True:
+        point = [(2.0 * rand()) - 1.0 for _ in range(n)]
+        radius_squared = sum(value * value for value in point)
+        if radius_squared <= 1.0:
+            return point
