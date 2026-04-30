@@ -1,4 +1,4 @@
-# vera-template-version: 2026.04.24
+# vera-template-version: 2026.04.30
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -63,19 +63,41 @@ jobs:
             echo "::error::Missing required inputs: vera_api_url, job_id, or callback_token"
             exit 1
           fi
-          HTTP_CODE=$(curl -s --retry 3 --retry-delay 5 \
-            -o /tmp/vera_creds.json -w "%{http_code}" \
-            -X POST "${VERA_API_URL}/internal/jobs/credentials" \
-            -H "Content-Type: application/json" \
-            -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\"}")
-          if [ "$HTTP_CODE" = "410" ]; then
-            echo "Job was cancelled by Vera, exiting gracefully"
-            exit 0
-          fi
-          if [ "$HTTP_CODE" != "200" ]; then
+          # Retry policy is owned by this loop, NOT curl's --retry. The Vera
+          # dispatcher fires workflow_dispatch before the pending→running DB
+          # commit lands; the runner can win the race and hit a 409
+          # job_not_ready. curl's --retry only covers transport / 5xx, so we
+          # retry 409s explicitly here. ~5 attempts * 2s sleep = ~10s budget,
+          # well above the typical sub-second pending→running window.
+          ATTEMPT=0
+          MAX_ATTEMPTS=5
+          while :; do
+            HTTP_CODE=$(curl -sS \
+              -o /tmp/vera_creds.json -w "%{http_code}" \
+              -X POST "${VERA_API_URL}/internal/jobs/credentials" \
+              -H "Content-Type: application/json" \
+              -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\"}" || echo "000")
+            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "410" ]; then
+              break
+            fi
+            if [ "$HTTP_CODE" = "409" ] && \
+               [ "$(jq -r '.code // empty' /tmp/vera_creds.json 2>/dev/null)" = "job_not_ready" ]; then
+              ATTEMPT=$((ATTEMPT + 1))
+              if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+                echo "::error::job_not_ready after ${MAX_ATTEMPTS} retries — Vera pending→running transition stuck"
+                cat /tmp/vera_creds.json 2>/dev/null || true
+                exit 1
+              fi
+              sleep 2
+              continue
+            fi
             echo "::error::Failed to fetch credentials from Vera API (HTTP $HTTP_CODE)"
             cat /tmp/vera_creds.json 2>/dev/null || true
             exit 1
+          done
+          if [ "$HTTP_CODE" = "410" ]; then
+            echo "Job was cancelled by Vera, exiting gracefully"
+            exit 0
           fi
           RESPONSE=$(cat /tmp/vera_creds.json)
           rm -f /tmp/vera_creds.json
