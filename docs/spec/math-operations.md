@@ -70,3 +70,14 @@ Return the absolute (non-negative) value of a number.
 - `absolute(n)` returns `-n` for negative numbers <!-- slug: math-operations.utilities.absolute-negative -->
 - `absolute(0)` returns `0` <!-- slug: math-operations.utilities.absolute-zero -->
 - Tests are included in the test suite <!-- slug: math-operations.utilities.absolute-has-tests -->
+
+---
+
+#### ✅ Triangle Area
+
+Calculate the area of a triangle from its base and height.
+
+**Done when:**
+- `calculate_triangle_area(base, height)` returns `(base * height) / 2` <!-- slug: math-operations.utilities.triangle-area-formula -->
+- Supports integer and float inputs <!-- slug: math-operations.utilities.triangle-area-numeric-inputs -->
+- Tests are included in the test suite <!-- slug: math-operations.utilities.triangle-area-has-tests -->
