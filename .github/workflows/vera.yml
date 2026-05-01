@@ -1,4 +1,4 @@
-# vera-template-version: 2026.04.30
+# vera-template-version: 2026.05.01
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -77,6 +77,9 @@ jobs:
               -X POST "${VERA_API_URL}/internal/jobs/credentials" \
               -H "Content-Type: application/json" \
               -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\"}" || echo "000")
+            # One observability line per attempt so the cadence is visible
+            # in the runner log even on success (issue #2060).
+            echo "vera-creds: attempt $((ATTEMPT + 1))/${MAX_ATTEMPTS} http=${HTTP_CODE}"
             if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "410" ]; then
               break
             fi
@@ -84,14 +87,14 @@ jobs:
                [ "$(jq -r '.code // empty' /tmp/vera_creds.json 2>/dev/null)" = "job_not_ready" ]; then
               ATTEMPT=$((ATTEMPT + 1))
               if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
-                echo "::error::job_not_ready after ${MAX_ATTEMPTS} retries — Vera pending→running transition stuck"
+                echo "::error::vera-creds: budget exhausted after ${MAX_ATTEMPTS} attempts of job_not_ready"
                 cat /tmp/vera_creds.json 2>/dev/null || true
                 exit 1
               fi
               sleep 2
               continue
             fi
-            echo "::error::Failed to fetch credentials from Vera API (HTTP $HTTP_CODE)"
+            echo "::error::vera-creds: non-retryable HTTP ${HTTP_CODE} on attempt $((ATTEMPT + 1))"
             cat /tmp/vera_creds.json 2>/dev/null || true
             exit 1
           done
