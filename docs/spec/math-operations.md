@@ -61,6 +61,17 @@ Divide one number by another with safe zero-division handling.
 
 ## Utilities
 
+#### ✅ Regular Hexagon Area
+
+Calculate the area of a regular hexagon from side length.
+
+**Done when:**
+- `regular_hexagon_area(side_length)` returns `(3 * sqrt(3) / 2) * side_length^2` <!-- slug: math-operations.utilities.regular-hexagon-area-formula -->
+- `regular_hexagon_area(side_length)` works with integers and floats <!-- slug: math-operations.utilities.regular-hexagon-area-numeric-types -->
+- `regular_hexagon_area(0)` returns `0.0` <!-- slug: math-operations.utilities.regular-hexagon-area-zero -->
+
+---
+
 #### 🚧 Absolute Value
 
 Return the absolute (non-negative) value of a number.
