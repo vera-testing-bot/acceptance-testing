@@ -1,6 +1,6 @@
 import pytest
 
-from src.math_helpers import divide, factorial, multiply
+from src.math_helpers import calculate_pentagon_area, divide, factorial, multiply
 
 
 def test_multiply_positive():
@@ -51,3 +51,12 @@ def test_factorial_positive():
 def test_factorial_negative():
     with pytest.raises(ValueError):
         factorial(-1)
+
+
+def test_calculate_pentagon_area():
+    assert calculate_pentagon_area(2) == pytest.approx(6.881909602355868)
+
+
+def test_calculate_pentagon_area_negative_side_length():
+    with pytest.raises(ValueError):
+        calculate_pentagon_area(-1)

@@ -1,3 +1,6 @@
+import math
+
+
 def multiply(a: int | float, b: int | float) -> int | float:
     """Return the product of a and b."""
     return a * b
@@ -24,3 +27,15 @@ def factorial(n: int) -> int:
     for i in range(2, n + 1):
         result *= i
     return result
+
+
+def calculate_pentagon_area(side_length: int | float) -> float:
+    """Return the area of a regular pentagon for the given side length.
+
+    Raises ValueError if side_length is negative.
+    """
+    if side_length < 0:
+        raise ValueError("Side length must be non-negative.")
+
+    factor = math.sqrt(5 * (5 + 2 * math.sqrt(5)))
+    return (side_length**2 * factor) / 4
