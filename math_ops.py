@@ -1,3 +1,6 @@
+import math
+
+
 def multiply(a, b):
     return a * b
 
@@ -68,3 +71,8 @@ def calculate_e():
         e += term
         n += 1
     return e
+
+
+def dodecahedron_volume(edge_length):
+    factor = (15 + 7 * math.sqrt(5)) / 4
+    return factor * edge_length**3

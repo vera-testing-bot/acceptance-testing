@@ -61,6 +61,17 @@ Divide one number by another with safe zero-division handling.
 
 ## Utilities
 
+#### 🚧 Dodecahedron Volume
+
+Calculate the volume of a regular dodecahedron from its edge length.
+
+**Done when:**
+- `dodecahedron_volume(edge_length)` applies `((15 + 7 * sqrt(5)) / 4) * edge_length**3` <!-- slug: math-operations.utilities.dodecahedron-volume-formula -->
+- `dodecahedron_volume(edge_length)` supports integer and float edge lengths <!-- slug: math-operations.utilities.dodecahedron-volume-numeric-types -->
+- Tests are included in the test suite <!-- slug: math-operations.utilities.dodecahedron-volume-has-tests -->
+
+---
+
 #### 🚧 Absolute Value
 
 Return the absolute (non-negative) value of a number.
