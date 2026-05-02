@@ -1,6 +1,11 @@
 import pytest
 
-from src.math_helpers import divide, factorial, multiply
+from src.math_helpers import (
+    calculate_light_travel_distance,
+    divide,
+    factorial,
+    multiply,
+)
 
 
 def test_multiply_positive():
@@ -51,3 +56,15 @@ def test_factorial_positive():
 def test_factorial_negative():
     with pytest.raises(ValueError):
         factorial(-1)
+
+
+def test_calculate_light_travel_distance_zero_seconds():
+    assert calculate_light_travel_distance(0) == 0
+
+
+def test_calculate_light_travel_distance_one_second():
+    assert calculate_light_travel_distance(1) == 299_792_458
+
+
+def test_calculate_light_travel_distance_float_seconds():
+    assert calculate_light_travel_distance(0.5) == 149_896_229.0

@@ -1,3 +1,6 @@
+LIGHT_SPEED_METERS_PER_SECOND = 299_792_458
+
+
 def multiply(a: int | float, b: int | float) -> int | float:
     """Return the product of a and b."""
     return a * b
@@ -24,3 +27,8 @@ def factorial(n: int) -> int:
     for i in range(2, n + 1):
         result *= i
     return result
+
+
+def calculate_light_travel_distance(seconds: int | float) -> int | float:
+    """Return the distance light travels in the given seconds."""
+    return seconds * LIGHT_SPEED_METERS_PER_SECOND
