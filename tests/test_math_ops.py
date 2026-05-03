@@ -1,4 +1,4 @@
-from math_ops import multiply, power, divide, absolute, calculate_e
+from math_ops import multiply, power, divide, absolute, calculate_e, calculate_sphere_area
 import pytest
 
 
@@ -88,3 +88,16 @@ def test_calculate_e_no_math_module():
     assert hasattr(math_ops, 'calculate_e')
     assert calculate_e() > 2.718280
     assert calculate_e() < 2.718282
+
+
+def test_calculate_sphere_area_for_positive_radius():
+    assert calculate_sphere_area(3) == pytest.approx(113.09733552923255)
+
+
+def test_calculate_sphere_area_for_zero_radius():
+    assert calculate_sphere_area(0) == 0
+
+
+def test_calculate_sphere_area_rejects_negative_radius():
+    with pytest.raises(ValueError, match="Radius cannot be negative"):
+        calculate_sphere_area(-1)

@@ -70,3 +70,15 @@ Return the absolute (non-negative) value of a number.
 - `absolute(n)` returns `-n` for negative numbers <!-- slug: math-operations.utilities.absolute-negative -->
 - `absolute(0)` returns `0` <!-- slug: math-operations.utilities.absolute-zero -->
 - Tests are included in the test suite <!-- slug: math-operations.utilities.absolute-has-tests -->
+
+---
+
+#### 🚧 Sphere Surface Area
+
+Calculate the surface area of a sphere from its radius.
+
+**Done when:**
+- `calculate_sphere_area(radius)` returns `4 * pi * radius^2` for non-negative radius values <!-- slug: math-operations.utilities.sphere-area-valid -->
+- `calculate_sphere_area(0)` returns `0` <!-- slug: math-operations.utilities.sphere-area-zero -->
+- `calculate_sphere_area(radius)` raises `ValueError` when `radius` is negative <!-- slug: math-operations.utilities.sphere-area-negative -->
+- Tests are included in the test suite <!-- slug: math-operations.utilities.sphere-area-has-tests -->

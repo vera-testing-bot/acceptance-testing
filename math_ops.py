@@ -1,3 +1,6 @@
+import math
+
+
 def multiply(a, b):
     return a * b
 
@@ -68,3 +71,10 @@ def calculate_e():
         e += term
         n += 1
     return e
+
+
+def calculate_sphere_area(radius: int | float) -> float:
+    """Return the surface area of a sphere for a given radius."""
+    if radius < 0:
+        raise ValueError("Radius cannot be negative")
+    return 4 * math.pi * (radius ** 2)
