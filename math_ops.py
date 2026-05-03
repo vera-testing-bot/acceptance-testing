@@ -1,3 +1,6 @@
+import math
+
+
 def multiply(a, b):
     return a * b
 
@@ -68,3 +71,12 @@ def calculate_e():
         e += term
         n += 1
     return e
+
+
+def pentagon_area(side_length):
+    """Calculate the area of a regular pentagon from its side length."""
+    if side_length <= 0:
+        raise ValueError("Side length must be greater than zero")
+
+    factor = math.sqrt(5 * (5 + 2 * math.sqrt(5)))
+    return (side_length ** 2 * factor) / 4

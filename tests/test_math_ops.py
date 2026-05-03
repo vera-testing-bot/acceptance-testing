@@ -1,4 +1,4 @@
-from math_ops import multiply, power, divide, absolute, calculate_e
+from math_ops import multiply, power, divide, absolute, calculate_e, pentagon_area
 import pytest
 
 
@@ -88,3 +88,17 @@ def test_calculate_e_no_math_module():
     assert hasattr(math_ops, 'calculate_e')
     assert calculate_e() > 2.718280
     assert calculate_e() < 2.718282
+
+
+# Pentagon area tests
+def test_pentagon_area_side_one():
+    assert pentagon_area(1) == pytest.approx(1.720477400588967)
+
+
+def test_pentagon_area_side_two():
+    assert pentagon_area(2) == pytest.approx(6.881909602355868)
+
+
+def test_pentagon_area_invalid_side_length_raises():
+    with pytest.raises(ValueError, match="Side length must be greater than zero"):
+        pentagon_area(0)
