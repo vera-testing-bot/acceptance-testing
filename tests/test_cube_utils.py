@@ -1,4 +1,4 @@
-from src.cube_utils import cube
+from src.cube_utils import cube, cube_surface_area
 
 
 def test_cube_positive():
@@ -15,3 +15,7 @@ def test_cube_zero():
 
 def test_cube_float():
     assert cube(1.5) == 3.375
+
+
+def test_cube_surface_area():
+    assert cube_surface_area(2) == 24
