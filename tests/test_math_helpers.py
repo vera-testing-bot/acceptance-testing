@@ -1,6 +1,6 @@
 import pytest
 
-from src.math_helpers import divide, factorial, multiply
+from src.math_helpers import area_of_regular_septigon, divide, factorial, multiply
 
 
 def test_multiply_positive():
@@ -51,3 +51,17 @@ def test_factorial_positive():
 def test_factorial_negative():
     with pytest.raises(ValueError):
         factorial(-1)
+
+
+def test_area_of_regular_septigon_unit_side():
+    assert area_of_regular_septigon(1) == pytest.approx(3.633912444001589)
+
+
+def test_area_of_regular_septigon_scales_with_square_of_side():
+    assert area_of_regular_septigon(2) == pytest.approx(14.535649776006356)
+
+
+@pytest.mark.parametrize("side_length", [0, -1, -2.5])
+def test_area_of_regular_septigon_rejects_non_positive_side_length(side_length):
+    with pytest.raises(ValueError, match="Side length must be positive"):
+        area_of_regular_septigon(side_length)
