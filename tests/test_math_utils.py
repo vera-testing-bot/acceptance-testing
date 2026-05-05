@@ -1,4 +1,4 @@
-from src.math_utils import add, negate, is_even
+from src.math_utils import add, negate, is_even, sin
 
 
 def test_add_positive_numbers():
@@ -39,3 +39,11 @@ def test_is_even_false():
 
 def test_is_even_zero():
     assert is_even(0) is True
+
+
+def test_sin_known_values_within_tolerance():
+    pi = 3.141592653589793
+    assert abs(sin(0.0) - 0.0) <= 1e-6
+    assert abs(sin(pi / 2) - 1.0) <= 1e-6
+    assert abs(sin(-pi / 2) + 1.0) <= 1e-6
+    assert abs(sin(pi) - 0.0) <= 1e-6
