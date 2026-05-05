@@ -1,6 +1,6 @@
 import pytest
 
-from src.math_helpers import divide, factorial, multiply
+from src.math_helpers import divide, factorial, multiply, quantile
 
 
 def test_multiply_positive():
@@ -51,3 +51,32 @@ def test_factorial_positive():
 def test_factorial_negative():
     with pytest.raises(ValueError):
         factorial(-1)
+
+
+def test_quantile_median_of_odd_count():
+    assert quantile([1, 3, 2, 5, 4], 0.5) == 3.0
+
+
+def test_quantile_with_interpolation():
+    assert quantile([10, 20, 30, 40], 0.25) == 17.5
+
+
+def test_quantile_min_and_max():
+    assert quantile([8, 2, 6], 0.0) == 2.0
+    assert quantile([8, 2, 6], 1.0) == 8.0
+
+
+def test_quantile_single_value():
+    assert quantile([7], 0.8) == 7.0
+
+
+def test_quantile_empty_values_raises():
+    with pytest.raises(ValueError):
+        quantile([], 0.5)
+
+
+def test_quantile_out_of_range_raises():
+    with pytest.raises(ValueError):
+        quantile([1, 2, 3], -0.1)
+    with pytest.raises(ValueError):
+        quantile([1, 2, 3], 1.1)
