@@ -70,3 +70,17 @@ Return the absolute (non-negative) value of a number.
 - `absolute(n)` returns `-n` for negative numbers <!-- slug: math-operations.utilities.absolute-negative -->
 - `absolute(0)` returns `0` <!-- slug: math-operations.utilities.absolute-zero -->
 - Tests are included in the test suite <!-- slug: math-operations.utilities.absolute-has-tests -->
+
+---
+
+## Trigonometry
+
+#### ✅ Sine
+
+Return the sine of an angle in radians without using math libraries.
+
+**Done when:**
+- `sin(x)` returns an approximation of sine for radian input <!-- slug: math-operations.trigonometry.sin-returns-approximation -->
+- `sin(x)` is accurate within `1e-6` for representative values <!-- slug: math-operations.trigonometry.sin-accuracy -->
+- Implementation does not rely on existing math libraries <!-- slug: math-operations.trigonometry.sin-no-math-library -->
+- Tests are included in the test suite <!-- slug: math-operations.trigonometry.sin-has-tests -->

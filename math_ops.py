@@ -68,3 +68,27 @@ def calculate_e():
         e += term
         n += 1
     return e
+
+
+def sin(x):
+    """Return sin(x) without using the math module."""
+    pi = 3.141592653589793
+    two_pi = 2 * pi
+
+    # Reduce x to [-pi, pi] for faster convergence.
+    x = x % two_pi
+    if x > pi:
+        x -= two_pi
+
+    term = x
+    result = x
+    n = 1
+
+    while True:
+        term *= -x * x / ((2 * n) * (2 * n + 1))
+        if abs(term) < 1e-15:
+            break
+        result += term
+        n += 1
+
+    return result

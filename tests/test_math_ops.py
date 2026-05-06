@@ -1,4 +1,4 @@
-from math_ops import multiply, power, divide, absolute, calculate_e
+from math_ops import multiply, power, divide, absolute, calculate_e, sin
 import pytest
 
 
@@ -88,3 +88,28 @@ def test_calculate_e_no_math_module():
     assert hasattr(math_ops, 'calculate_e')
     assert calculate_e() > 2.718280
     assert calculate_e() < 2.718282
+
+
+# Sine function tests
+def test_sin_zero():
+    assert sin(0.0) == pytest.approx(0.0, abs=1e-6)
+
+
+def test_sin_pi_over_two():
+    pi = 3.141592653589793
+    assert sin(pi / 2) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_sin_negative_pi_over_two():
+    pi = 3.141592653589793
+    assert sin(-pi / 2) == pytest.approx(-1.0, abs=1e-6)
+
+
+def test_sin_pi_is_zero():
+    pi = 3.141592653589793
+    assert sin(pi) == pytest.approx(0.0, abs=1e-6)
+
+
+def test_sin_periodicity_large_input():
+    pi = 3.141592653589793
+    assert sin(5 * pi / 2) == pytest.approx(1.0, abs=1e-6)
