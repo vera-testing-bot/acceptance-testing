@@ -25,3 +25,7 @@ def is_perfect_number(n):
         candidate += 1
 
     return divisor_sum == n
+
+
+def hello_spec_audit():
+    return 42
