@@ -11,6 +11,9 @@ def is_even(n):
 
 
 def is_perfect_number(n):
+    if not isinstance(n, int) or isinstance(n, bool):
+        return False
+
     if n <= 1:
         return False
 

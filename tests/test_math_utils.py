@@ -54,6 +54,7 @@ def test_is_perfect_number_cases():
     assert is_perfect_number(1) is False
     assert is_perfect_number(-5) is False
     assert is_perfect_number(0) is False
+    assert is_perfect_number(6.0) is False
 
 
 def test_hello_spec_audit_1778114263_returns_42():
