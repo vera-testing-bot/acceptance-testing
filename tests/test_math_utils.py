@@ -1,4 +1,4 @@
-from src.math_utils import add, negate, is_even
+from src.math_utils import add, negate, is_even, is_perfect_number
 
 
 def test_add_positive_numbers():
@@ -39,3 +39,12 @@ def test_is_even_false():
 
 def test_is_even_zero():
     assert is_even(0) is True
+
+
+def test_is_perfect_number_cases():
+    assert is_perfect_number(6) is True
+    assert is_perfect_number(28) is True
+    assert is_perfect_number(12) is False
+    assert is_perfect_number(1) is False
+    assert is_perfect_number(-5) is False
+    assert is_perfect_number(0) is False
