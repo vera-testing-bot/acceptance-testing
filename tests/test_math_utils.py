@@ -1,3 +1,4 @@
+import src.math_utils as math_utils
 from src.math_utils import add, negate, is_even, is_perfect_number, hello_spec_audit
 
 
@@ -52,3 +53,7 @@ def test_is_perfect_number_cases():
 
 def test_hello_spec_audit_returns_42():
     assert hello_spec_audit() == 42
+
+
+def test_no_suffixed_hello_spec_audit_helper_exists():
+    assert not hasattr(math_utils, "hello_spec_audit_1778114263")
