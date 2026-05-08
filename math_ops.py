@@ -96,4 +96,5 @@ def sin(x):
 
 def calculate_p_royal_flush():
     """Return the probability of a royal flush in a 5-card hand."""
-    return 4 / 2598960
+    total_five_card_hands = (52 * 51 * 50 * 49 * 48) // (5 * 4 * 3 * 2 * 1)
+    return 4 / total_five_card_hands
