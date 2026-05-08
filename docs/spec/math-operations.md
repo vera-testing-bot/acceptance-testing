@@ -61,6 +61,18 @@ Divide one number by another with safe zero-division handling.
 
 ## Utilities
 
+#### ✅ Kaprekar Number Check
+
+Return whether a number is a Kaprekar number.
+
+**Done when:**
+- `is_kaprekar_number(n)` returns `True` for known Kaprekar values like `1`, `9`, and `45` <!-- slug: math-operations.utilities.kaprekar-known-values -->
+- `is_kaprekar_number(n)` returns `False` for non-Kaprekar values and negatives <!-- slug: math-operations.utilities.kaprekar-non-values -->
+- Implementation reuses local math helpers in module logic <!-- slug: math-operations.utilities.kaprekar-local-helpers -->
+- Tests are included in the test suite <!-- slug: math-operations.utilities.kaprekar-has-tests -->
+
+---
+
 #### 🚧 Absolute Value
 
 Return the absolute (non-negative) value of a number.

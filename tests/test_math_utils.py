@@ -2,6 +2,7 @@ from src.math_utils import (
     add,
     hello_spec_audit_1778114263,
     is_even,
+    is_kaprekar_number,
     is_perfect_number,
     negate,
 )
@@ -54,6 +55,14 @@ def test_is_perfect_number_cases():
     assert is_perfect_number(1) is False
     assert is_perfect_number(-5) is False
     assert is_perfect_number(0) is False
+
+
+def test_is_kaprekar_number_cases():
+    assert is_kaprekar_number(1) is True
+    assert is_kaprekar_number(9) is True
+    assert is_kaprekar_number(45) is True
+    assert is_kaprekar_number(10) is False
+    assert is_kaprekar_number(-45) is False
 
 
 def test_hello_spec_audit_1778114263_returns_42():
