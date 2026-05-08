@@ -1,5 +1,6 @@
 from src.math_utils import (
     add,
+    hello_spec_audit,
     hello_spec_audit_1778114263,
     is_even,
     is_kaprekar_number,
@@ -67,3 +68,7 @@ def test_is_kaprekar_number_cases():
 
 def test_hello_spec_audit_1778114263_returns_42():
     assert hello_spec_audit_1778114263() == 42
+
+
+def test_hello_spec_audit_returns_42():
+    assert hello_spec_audit() == 42

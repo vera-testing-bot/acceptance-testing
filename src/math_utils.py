@@ -49,3 +49,7 @@ def is_kaprekar_number(n):
 
 def hello_spec_audit_1778114263():
     return 42
+
+
+def hello_spec_audit():
+    return 42
