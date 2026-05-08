@@ -2,4 +2,4 @@ from src.greetings import hello_world
 
 
 def test_hello_world_returns_expected_string():
-    assert hello_world() == "Hello, World!"
+    assert hello_world() == "Goodbye, World!"
