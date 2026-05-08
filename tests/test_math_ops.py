@@ -1,4 +1,12 @@
-from math_ops import multiply, power, divide, absolute, calculate_e, sin
+from math_ops import (
+    absolute,
+    calculate_e,
+    calculate_p_royal_flush,
+    divide,
+    multiply,
+    power,
+    sin,
+)
 import pytest
 
 
@@ -113,3 +121,13 @@ def test_sin_pi_is_zero():
 def test_sin_periodicity_large_input():
     pi = 3.141592653589793
     assert sin(5 * pi / 2) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_calculate_p_royal_flush_returns_float():
+    result = calculate_p_royal_flush()
+    assert isinstance(result, float)
+
+
+def test_calculate_p_royal_flush_value():
+    # Exactly 4 royal flushes among all 5-card hands from 52 cards.
+    assert calculate_p_royal_flush() == pytest.approx(4 / 2598960, rel=1e-12)
