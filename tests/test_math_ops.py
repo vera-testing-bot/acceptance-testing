@@ -1,4 +1,12 @@
-from math_ops import multiply, power, divide, absolute, calculate_e, sin
+from math_ops import (
+    absolute,
+    calculate_e,
+    calculate_p_2_pairs,
+    divide,
+    multiply,
+    power,
+    sin,
+)
 import pytest
 
 
@@ -113,3 +121,9 @@ def test_sin_pi_is_zero():
 def test_sin_periodicity_large_input():
     pi = 3.141592653589793
     assert sin(5 * pi / 2) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_calculate_p_2_pairs_returns_expected_probability():
+    result = calculate_p_2_pairs()
+    assert isinstance(result, float)
+    assert result == pytest.approx(0.047539, abs=1e-6)

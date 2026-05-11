@@ -70,6 +70,16 @@ def calculate_e():
     return e
 
 
+def calculate_p_2_pairs():
+    """Return the probability of exactly two pairs in a 5-card poker hand."""
+    pair_rank_choices = 78
+    pair_suit_choices = 36
+    kicker_choices = 44
+    two_pair_hands = pair_rank_choices * pair_suit_choices * kicker_choices
+    total_hands = 2_598_960
+    return two_pair_hands / total_hands
+
+
 def sin(x):
     """Return sin(x) without using the math module."""
     pi = 3.141592653589793
