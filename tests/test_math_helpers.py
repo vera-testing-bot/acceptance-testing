@@ -1,6 +1,6 @@
 import pytest
 
-from src.math_helpers import divide, factorial, multiply
+from src.math_helpers import calculate_drop_time, divide, factorial, multiply
 
 
 def test_multiply_positive():
@@ -51,3 +51,16 @@ def test_factorial_positive():
 def test_factorial_negative():
     with pytest.raises(ValueError):
         factorial(-1)
+
+
+def test_calculate_drop_time_zero_height():
+    assert calculate_drop_time(0) == 0.0
+
+
+def test_calculate_drop_time_returns_seconds():
+    assert calculate_drop_time(19.62) == pytest.approx(2.0)
+
+
+def test_calculate_drop_time_negative_height_raises():
+    with pytest.raises(ValueError):
+        calculate_drop_time(-1)
