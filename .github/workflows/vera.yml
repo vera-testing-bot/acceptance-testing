@@ -1,4 +1,4 @@
-# vera-template-version: 2026.05.04
+# vera-template-version: 2026.05.14
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -18,10 +18,16 @@
 # sync. CI will fail on push-to-main if it isn't. Incident:
 # docs/failures/2026-04/23-workflow-template-drift.md
 name: Vera
+run-name: Vera — ${{ inputs.job_summary || format('job {0}', inputs.job_id) }}
 
 on:
   workflow_dispatch:
     inputs:
+      job_summary:
+        description: "Human-readable run title (e.g. 'Review Plan for #1234')"
+        required: false
+        default: ""
+        type: string
       job_id:
         description: "Vera job ID"
         required: false
@@ -76,7 +82,7 @@ jobs:
             RESPONSE=$(curl -sS -w $'\n%{http_code}' \
               -X POST "${VERA_API_URL}/internal/jobs/credentials" \
               -H "Content-Type: application/json" \
-              -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\"}") || RESPONSE=$'\n000'
+              -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"github_actions_run_url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"}") || RESPONSE=$'\n000'
             HTTP_CODE=$(printf '%s' "$RESPONSE" | tail -n1)
             BODY=$(printf '%s' "$RESPONSE" | sed '$d')
             # One observability line per attempt so the cadence is visible
