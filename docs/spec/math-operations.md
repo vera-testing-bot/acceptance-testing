@@ -61,6 +61,18 @@ Divide one number by another with safe zero-division handling.
 
 ## Utilities
 
+#### ✅ Physics Constants
+
+Expose reusable physics constants for common calculations.
+
+**Done when:**
+- `EARTH_GRAVITY_M_PER_S2` is defined as standard gravity (`9.80665`) <!-- slug: math-operations.utilities.physics.gravity -->
+- Additional constants include gravitational, Planck, and Avogadro constants <!-- slug: math-operations.utilities.physics.additional-constants -->
+- `physics_constant(name)` returns supported constants and raises `ValueError` for unsupported names <!-- slug: math-operations.utilities.physics.lookup -->
+- Tests cover constants, mapping, and validation behavior <!-- slug: math-operations.utilities.physics.has-tests -->
+
+---
+
 #### ✅ Kaprekar Number Check
 
 Return whether a number is a Kaprekar number.
