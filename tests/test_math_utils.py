@@ -1,5 +1,8 @@
+import pytest
+
 from src.math_utils import (
     add,
+    calculate_pepperoni_lbs,
     hello_spec_audit,
     hello_spec_audit_1778114263,
     is_even,
@@ -72,3 +75,22 @@ def test_hello_spec_audit_1778114263_returns_42():
 
 def test_hello_spec_audit_returns_42():
     assert hello_spec_audit() == 42
+
+
+def test_calculate_pepperoni_lbs_for_large_pizza():
+    assert calculate_pepperoni_lbs(16, 2) == pytest.approx(0.9, rel=0.05)
+
+
+def test_calculate_pepperoni_lbs_prefers_larger_slices():
+    small_slice_lbs = calculate_pepperoni_lbs(16, 1)
+    large_slice_lbs = calculate_pepperoni_lbs(16, 2)
+
+    assert small_slice_lbs > large_slice_lbs
+
+
+def test_calculate_pepperoni_lbs_rejects_non_positive_diameters():
+    with pytest.raises(ValueError):
+        calculate_pepperoni_lbs(0, 2)
+
+    with pytest.raises(ValueError):
+        calculate_pepperoni_lbs(16, -1)
