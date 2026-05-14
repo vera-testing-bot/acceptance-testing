@@ -1,3 +1,11 @@
+import math
+
+
+OVERLAP_BAND_WIDTH_INCHES = 0.08
+PEPPERONI_THICKNESS_INCHES = 0.1
+PEPPERONI_DENSITY_LB_PER_CUBIC_INCH = 0.038
+
+
 def add(a, b):
     return a + b
 
@@ -45,6 +53,29 @@ def is_kaprekar_number(n):
             return True
 
     return False
+
+
+def calculate_pepperoni_lbs(pizza_diameter, pepperoni_diameter):
+    if pizza_diameter <= 0 or pepperoni_diameter <= 0:
+        raise ValueError("diameters must be positive")
+
+    pepperoni_radius = pepperoni_diameter / 2
+    pizza_radius = pizza_diameter / 2
+
+    pizza_area = math.pi * pizza_radius * pizza_radius
+    pepperoni_area = math.pi * pepperoni_radius * pepperoni_radius
+
+    effective_coverage_radius = max(pepperoni_radius - OVERLAP_BAND_WIDTH_INCHES, 0.01)
+    effective_coverage_area = math.pi * effective_coverage_radius * effective_coverage_radius
+
+    slices_needed = pizza_area / effective_coverage_area
+    pounds_per_slice = (
+        pepperoni_area
+        * PEPPERONI_THICKNESS_INCHES
+        * PEPPERONI_DENSITY_LB_PER_CUBIC_INCH
+    )
+
+    return slices_needed * pounds_per_slice
 
 
 def hello_spec_audit_1778114263():
