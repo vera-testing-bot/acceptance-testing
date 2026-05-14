@@ -3,10 +3,16 @@ import pytest
 import math
 
 from src.math_helpers import (
+    AVOGADRO_CONSTANT_PER_MOL,
+    EARTH_GRAVITY_M_PER_S2,
+    GRAVITATIONAL_CONSTANT_M3_PER_KG_S2,
+    PHYSICS_CONSTANTS,
+    PLANCK_CONSTANT_J_S,
     SPEED_OF_LIGHT,
     SPEED_OF_LIGHT_KM_PER_S,
     SPEED_OF_LIGHT_M_PER_S,
     SPEED_OF_LIGHT_MI_PER_S,
+    physics_constant,
     divide,
     factorial,
     multiply,
@@ -85,3 +91,29 @@ def test_speed_of_light_returns_value_for_unit():
 def test_speed_of_light_rejects_unsupported_unit():
     with pytest.raises(ValueError, match="Unsupported unit"):
         speed_of_light("ft/s")
+
+
+def test_physics_constants_include_core_values():
+    assert EARTH_GRAVITY_M_PER_S2 == 9.80665
+    assert GRAVITATIONAL_CONSTANT_M3_PER_KG_S2 == 6.67430e-11
+    assert PLANCK_CONSTANT_J_S == 6.62607015e-34
+    assert AVOGADRO_CONSTANT_PER_MOL == 6.02214076e23
+
+
+def test_physics_constant_mapping():
+    assert PHYSICS_CONSTANTS["gravity"] == EARTH_GRAVITY_M_PER_S2
+    assert PHYSICS_CONSTANTS["gravitational_constant"] == GRAVITATIONAL_CONSTANT_M3_PER_KG_S2
+    assert PHYSICS_CONSTANTS["planck_constant"] == PLANCK_CONSTANT_J_S
+    assert PHYSICS_CONSTANTS["avogadro_constant"] == AVOGADRO_CONSTANT_PER_MOL
+
+
+def test_physics_constant_returns_value_for_name():
+    assert physics_constant("gravity") == EARTH_GRAVITY_M_PER_S2
+    assert physics_constant("gravitational_constant") == GRAVITATIONAL_CONSTANT_M3_PER_KG_S2
+    assert physics_constant("planck_constant") == PLANCK_CONSTANT_J_S
+    assert physics_constant("avogadro_constant") == AVOGADRO_CONSTANT_PER_MOL
+
+
+def test_physics_constant_rejects_unsupported_name():
+    with pytest.raises(ValueError, match="Unsupported constant"):
+        physics_constant("pi")
