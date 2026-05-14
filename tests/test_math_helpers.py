@@ -1,6 +1,17 @@
 import pytest
 
-from src.math_helpers import divide, factorial, multiply
+import math
+
+from src.math_helpers import (
+    SPEED_OF_LIGHT,
+    SPEED_OF_LIGHT_KM_PER_S,
+    SPEED_OF_LIGHT_M_PER_S,
+    SPEED_OF_LIGHT_MI_PER_S,
+    divide,
+    factorial,
+    multiply,
+    speed_of_light,
+)
 
 
 def test_multiply_positive():
@@ -51,3 +62,26 @@ def test_factorial_positive():
 def test_factorial_negative():
     with pytest.raises(ValueError):
         factorial(-1)
+
+
+def test_speed_of_light_constants_in_multiple_units():
+    assert SPEED_OF_LIGHT_M_PER_S == 299_792_458
+    assert SPEED_OF_LIGHT_KM_PER_S == 299_792.458
+    assert math.isclose(SPEED_OF_LIGHT_MI_PER_S, 186_282.39705122002)
+
+
+def test_speed_of_light_mapping():
+    assert SPEED_OF_LIGHT["m/s"] == SPEED_OF_LIGHT_M_PER_S
+    assert SPEED_OF_LIGHT["km/s"] == SPEED_OF_LIGHT_KM_PER_S
+    assert SPEED_OF_LIGHT["mi/s"] == SPEED_OF_LIGHT_MI_PER_S
+
+
+def test_speed_of_light_returns_value_for_unit():
+    assert speed_of_light("m/s") == SPEED_OF_LIGHT_M_PER_S
+    assert speed_of_light("km/s") == SPEED_OF_LIGHT_KM_PER_S
+    assert speed_of_light("mi/s") == SPEED_OF_LIGHT_MI_PER_S
+
+
+def test_speed_of_light_rejects_unsupported_unit():
+    with pytest.raises(ValueError, match="Unsupported unit"):
+        speed_of_light("ft/s")
