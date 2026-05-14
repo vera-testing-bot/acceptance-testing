@@ -94,10 +94,15 @@ def test_speed_of_light_rejects_unsupported_unit():
 
 
 def test_physics_constants_include_core_values():
-    assert EARTH_GRAVITY_M_PER_S2 == 9.80665
-    assert GRAVITATIONAL_CONSTANT_M3_PER_KG_S2 == 6.67430e-11
-    assert PLANCK_CONSTANT_J_S == 6.62607015e-34
-    assert AVOGADRO_CONSTANT_PER_MOL == 6.02214076e23
+    assert math.isclose(EARTH_GRAVITY_M_PER_S2, 9.80665, rel_tol=1e-12, abs_tol=0.0)
+    assert math.isclose(
+        GRAVITATIONAL_CONSTANT_M3_PER_KG_S2,
+        6.67430e-11,
+        rel_tol=1e-12,
+        abs_tol=0.0,
+    )
+    assert math.isclose(PLANCK_CONSTANT_J_S, 6.62607015e-34, rel_tol=1e-12, abs_tol=0.0)
+    assert math.isclose(AVOGADRO_CONSTANT_PER_MOL, 6.02214076e23, rel_tol=1e-12, abs_tol=0.0)
 
 
 def test_physics_constant_mapping():
