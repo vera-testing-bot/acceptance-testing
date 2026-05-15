@@ -61,6 +61,18 @@ Divide one number by another with safe zero-division handling.
 
 ## Utilities
 
+#### ✅ Standard Deviation
+
+Return the population standard deviation for a list of numbers.
+
+**Done when:**
+- `calculate_stddev(numbers)` returns the expected population standard deviation for a representative numeric list <!-- slug: math-operations.statistics.stddev-basic -->
+- `calculate_stddev(numbers)` returns `0.0` for a single-value list <!-- slug: math-operations.statistics.stddev-single-value -->
+- `calculate_stddev(numbers)` raises `ValueError` when input is empty <!-- slug: math-operations.statistics.stddev-empty-input -->
+- Implementation does not use the `statistics` module <!-- slug: math-operations.statistics.stddev-no-statistics-module -->
+
+---
+
 #### ✅ Physics Constants
 
 Expose reusable physics constants for common calculations.
