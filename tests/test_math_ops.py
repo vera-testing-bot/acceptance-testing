@@ -40,11 +40,12 @@ def test_power_zero_base_zero_exponent():
 
 
 def test_power_negative_exponent():
-    assert power(2, -1) == 0.5
+    with pytest.raises(ValueError, match="Negative exponents are not supported"):
+        power(2, -1)
 
 
 def test_power_zero_base_negative_exponent():
-    with pytest.raises(ValueError, match="Cannot raise 0 to a negative power"):
+    with pytest.raises(ValueError, match="Negative exponents are not supported"):
         power(0, -1)
 
 

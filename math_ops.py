@@ -14,10 +14,10 @@ def power(base, exp):
         base raised to the power of exp
     
     Raises:
-        ValueError: If base is 0 and exp is negative
+        ValueError: If exp is negative
     """
-    if base == 0 and exp < 0:
-        raise ValueError("Cannot raise 0 to a negative power")
+    if exp < 0:
+        raise ValueError("Negative exponents are not supported")
     return base ** exp
 
 
