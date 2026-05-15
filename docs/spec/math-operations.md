@@ -85,7 +85,7 @@ Return whether a number is a Kaprekar number.
 
 ---
 
-#### 🚧 Absolute Value
+#### ✅ Absolute Value
 
 Return the absolute (non-negative) value of a number.
 

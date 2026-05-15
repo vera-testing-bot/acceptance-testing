@@ -1,3 +1,4 @@
+import math
 from math_ops import (
     absolute,
     calculate_e,
@@ -77,16 +78,22 @@ def test_divide_by_zero_float_raises_with_consistent_message():
 
 
 # Absolute value tests
-def test_absolute_positive():
-    assert absolute(7) == 7
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (7, 7),
+        (-7, 7),
+        (0, 0),
+    ],
+)
+def test_absolute_returns_non_negative_magnitude(value, expected):
+    assert absolute(value) == expected
 
 
-def test_absolute_negative():
-    assert absolute(-7) == 7
-
-
-def test_absolute_zero():
-    assert absolute(0) == 0
+def test_absolute_negative_zero_returns_positive_zero():
+    result = absolute(-0.0)
+    assert result == 0.0
+    assert math.copysign(1.0, result) == 1.0
 
 
 # Calculate e tests
