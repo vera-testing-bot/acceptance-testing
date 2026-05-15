@@ -2,6 +2,7 @@ import math
 from math_ops import (
     absolute,
     calculate_e,
+    calculate_stddev,
     calculate_p_2_pairs,
     divide,
     multiply,
@@ -106,7 +107,8 @@ def test_calculate_e_accuracy():
 def test_calculate_e_no_math_module():
     # Ensure the function works without importing math
     import math_ops
-    assert hasattr(math_ops, 'calculate_e')
+
+    assert hasattr(math_ops, "calculate_e")
     assert calculate_e() > 2.718280
     assert calculate_e() < 2.718282
 
@@ -140,3 +142,26 @@ def test_calculate_p_2_pairs_returns_expected_probability():
     result = calculate_p_2_pairs()
     assert isinstance(result, float)
     assert result == pytest.approx(0.047539, abs=1e-6)
+
+
+@pytest.mark.spec("math-operations.statistics.stddev-basic")
+def test_calculate_stddev_returns_population_standard_deviation():
+    numbers = [2, 4, 4, 4, 5, 5, 7, 9]
+    assert calculate_stddev(numbers) == pytest.approx(2.0, abs=1e-9)
+
+
+@pytest.mark.spec("math-operations.statistics.stddev-single-value")
+def test_calculate_stddev_single_value_is_zero():
+    assert calculate_stddev([5]) == 0.0
+
+
+@pytest.mark.spec("math-operations.statistics.stddev-empty-input")
+def test_calculate_stddev_raises_for_empty_input():
+    with pytest.raises(ValueError, match="numbers must not be empty"):
+        calculate_stddev([])
+
+
+@pytest.mark.spec("math-operations.statistics.stddev-no-statistics-module")
+def test_calculate_stddev_without_statistics_module_dependency():
+    result = calculate_stddev([1, 2, 3])
+    assert result == pytest.approx(0.816496580927726, abs=1e-12)

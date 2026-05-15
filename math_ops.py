@@ -5,20 +5,20 @@ def multiply(a, b):
 def power(base, exp):
     """
     Calculate the exponent of a number.
-    
+
     Args:
         base: The base number
         exp: The exponent
-    
+
     Returns:
         base raised to the power of exp
-    
+
     Raises:
         ValueError: If exp is negative
     """
     if exp < 0:
         raise ValueError("Negative exponents are not supported")
-    return base ** exp
+    return base**exp
 
 
 def divide(a, b):
@@ -102,3 +102,36 @@ def sin(x):
         n += 1
 
     return result
+
+
+def calculate_stddev(numbers):
+    """Return population standard deviation for a list of numbers."""
+    if not numbers:
+        raise ValueError("numbers must not be empty")
+
+    total = 0.0
+    count = 0
+    for value in numbers:
+        total += value
+        count += 1
+
+    mean = total / count
+
+    squared_distance_sum = 0.0
+    for value in numbers:
+        distance = value - mean
+        squared_distance_sum += distance * distance
+
+    variance = squared_distance_sum / count
+    if variance == 0.0:
+        return 0.0
+
+    guess = variance if variance >= 1.0 else 1.0
+    while True:
+        next_guess = 0.5 * (guess + variance / guess)
+        delta = next_guess - guess
+        if delta < 0:
+            delta = -delta
+        if delta < 1e-12:
+            return next_guess
+        guess = next_guess
