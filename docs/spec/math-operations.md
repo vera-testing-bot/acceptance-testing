@@ -37,7 +37,7 @@ Add two numbers together.
 
 ---
 
-#### 🚧 Multiplication
+#### ✅ Multiplication
 
 Multiply two numbers together.
 

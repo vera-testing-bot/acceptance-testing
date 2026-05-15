@@ -8,6 +8,7 @@ from src.math_utils import (
     is_even,
     is_kaprekar_number,
     is_perfect_number,
+    multiply,
     negate,
 )
 
@@ -26,6 +27,14 @@ def test_add_zero():
 
 def test_add_floats():
     assert add(1.5, 2.5) == 4.0
+
+
+def test_multiply_integers():
+    assert multiply(6, 7) == 42
+
+
+def test_multiply_floats():
+    assert multiply(1.25, 2.0) == pytest.approx(2.5)
 
 
 def test_negate_positive():
