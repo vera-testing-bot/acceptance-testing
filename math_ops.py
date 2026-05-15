@@ -104,21 +104,21 @@ def sin(x):
     return result
 
 
-def calculate_stddev(numbers):
-    """Return population standard deviation for a list of numbers."""
-    if not numbers:
+def stddev(values):
+    """Return population standard deviation for a list of numeric values."""
+    if not values:
         raise ValueError("numbers must not be empty")
 
     total = 0.0
     count = 0
-    for value in numbers:
+    for value in values:
         total += value
         count += 1
 
     mean = total / count
 
     squared_distance_sum = 0.0
-    for value in numbers:
+    for value in values:
         distance = value - mean
         squared_distance_sum += distance * distance
 
@@ -135,3 +135,8 @@ def calculate_stddev(numbers):
         if delta < 1e-12:
             return next_guess
         guess = next_guess
+
+
+def calculate_stddev(numbers):
+    """Backward-compatible alias for stddev."""
+    return stddev(numbers)
