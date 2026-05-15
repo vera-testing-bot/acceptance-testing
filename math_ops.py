@@ -42,9 +42,9 @@ def divide(a, b):
 
 def absolute(n):
     """Return the absolute value of n."""
-    if n < 0:
-        return -n
-    return n
+    if n == 0:
+        return n + 0
+    return -n if n < 0 else n
 
 
 def calculate_e():
