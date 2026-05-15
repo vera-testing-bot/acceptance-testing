@@ -71,6 +71,11 @@ def test_divide_by_zero_raises():
         divide(5, 0)
 
 
+def test_divide_by_zero_float_raises_with_consistent_message():
+    with pytest.raises(ValueError, match=r"^Cannot divide by zero\.$"):
+        divide(5, 0.0)
+
+
 # Absolute value tests
 def test_absolute_positive():
     assert absolute(7) == 7

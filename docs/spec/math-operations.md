@@ -48,7 +48,7 @@ Multiply two numbers together.
 
 ---
 
-#### 🚧 Division
+#### ✅ Division
 
 Divide one number by another with safe zero-division handling.
 
