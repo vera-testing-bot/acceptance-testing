@@ -1,4 +1,4 @@
-# vera-template-version: 2026.05.14
+# vera-template-version: 2026.05.16
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -40,6 +40,11 @@ on:
         type: string
       vera_api_url:
         description: "Vera API base URL for credential exchange and callbacks"
+        required: false
+        default: ""
+        type: string
+      originating_ref:
+        description: "Originating issue/PR number for the failsafe finalizer comment"
         required: false
         default: ""
         type: string
@@ -148,6 +153,15 @@ jobs:
             fi
           fi
           STATUS="completed"
+          # An agent that could not proceed autonomously writes a
+          # needs_input outcome — surface it as awaiting_human (issue #2907).
+          # The agent-exit-code "failed" check below still wins over this.
+          if [ -f /tmp/vera_outcome.json ]; then
+            NEEDS_INPUT=$(jq -r '.status // empty' /tmp/vera_outcome.json 2>/dev/null)
+            if [ "$NEEDS_INPUT" = "needs_input" ]; then
+              STATUS="awaiting_human"
+            fi
+          fi
           ERROR_FIELD=""
           if [ -f /tmp/vera_agent_exit_code ]; then
             AGENT_EC=$(tr -d '[:space:]' < /tmp/vera_agent_exit_code)
@@ -155,13 +169,25 @@ jobs:
               STATUS="failed"
               ERROR_FIELD=", \"error\": \"Agent exited with code ${AGENT_EC}\""
             fi
+          else
+            # Layer 2: a missing sentinel means we cannot prove the agent
+            # finished cleanly — treat it as a failure rather than greenwash.
+            STATUS="failed"
+            ERROR_FIELD=", \"error\": \"Agent exit code unknown (sentinel missing)\""
           fi
           PAYLOAD="{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"${STATUS}\"${OUTCOME_FIELD}${ERROR_FIELD}}"
-          curl -sf --retry 3 --retry-delay 5 \
+          # Layer 1+3: a failed callback POST must fail the step (loud, not a
+          # warning). On a confirmed 2xx, drop the sentinel that gates the
+          # failsafe finalizer below.
+          if curl -sf --retry 3 --retry-delay 5 \
             -X POST "${VERA_API_URL}/internal/jobs/callback" \
             -H "Content-Type: application/json" \
-            -d "$PAYLOAD" \
-            || echo "::warning::Failed to report callback to Vera API"
+            -d "$PAYLOAD"; then
+            touch /tmp/vera_callback_sent
+          else
+            echo "::error::callback POST failed"
+            exit 1
+          fi
 
       - name: Report failure
         if: failure()
@@ -170,8 +196,48 @@ jobs:
           VERA_CALLBACK_TOKEN: ${{ inputs.callback_token }}
           VERA_API_URL: ${{ inputs.vera_api_url }}
         run: |
-          curl -sf --retry 3 --retry-delay 5 \
+          # Layer 1+3: a failed callback POST must fail the step (loud, not a
+          # warning). On a confirmed 2xx, drop the sentinel that gates the
+          # failsafe finalizer below.
+          if curl -sf --retry 3 --retry-delay 5 \
             -X POST "${VERA_API_URL}/internal/jobs/callback" \
             -H "Content-Type: application/json" \
-            -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"failed\", \"error\": \"Workflow failed\"}" \
-            || echo "::warning::Failed to report failure to Vera API"
+            -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"failed\", \"error\": \"Workflow failed\"}"; then
+            touch /tmp/vera_callback_sent
+          else
+            echo "::error::callback POST failed"
+            exit 1
+          fi
+
+      - name: Failsafe finalizer
+        # Layer 3: guarantee a visible result on the originating issue/PR even
+        # when the callback chain never ran (credential exchange failed, the
+        # runner died mid-step, etc). Gated on the /tmp/vera_callback_sent
+        # sentinel so it is a no-op whenever a callback already landed.
+        #
+        # Uses secrets.GITHUB_TOKEN deliberately — NOT env.GITHUB_APP_TOKEN,
+        # which is unset exactly when credential exchange fails (the case this
+        # step exists to cover). The originating issue/PR lives in the same
+        # customer repo this workflow runs in, and the job already declares
+        # `permissions: issues: write`, so the default token can comment.
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ORIGINATING_REF: ${{ inputs.originating_ref }}
+        run: |
+          if [ -f /tmp/vera_callback_sent ]; then
+            echo "Callback already reported — finalizer is a no-op."
+            exit 0
+          fi
+          if [ -z "$ORIGINATING_REF" ]; then
+            echo "::warning::No originating_ref provided — cannot post failsafe comment."
+            exit 0
+          fi
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          BODY="Vera job exited without reporting a result — see the [job run](${RUN_URL}). This is an automated failsafe; please retry the dispatch."
+          if [ -f /tmp/vera_agent.log ]; then
+            LOG_TAIL=$(tail -n 20 /tmp/vera_agent.log)
+            BODY="${BODY}"$'\n\n'"<details><summary>Agent log tail</summary>"$'\n\n'"\`\`\`"$'\n'"${LOG_TAIL}"$'\n'"\`\`\`"$'\n'"</details>"
+          fi
+          BODY="${BODY}"$'\n\n'"🤖 Generated with Claude Opus 4.7"
+          gh issue comment "$ORIGINATING_REF" --repo "$GITHUB_REPOSITORY" --body "$BODY"
