@@ -29,18 +29,22 @@ def test_multiply_floats():
 
 
 # Power function tests
+@pytest.mark.spec("math-operations.arithmetic.power-integers")
 def test_power_positive():
     assert power(2, 3) == 8
 
 
+@pytest.mark.spec("math-operations.arithmetic.power-zero")
 def test_power_zero_exponent():
     assert power(2, 0) == 1
 
 
+@pytest.mark.spec("math-operations.arithmetic.power-has-tests")
 def test_power_zero_base_zero_exponent():
     assert power(0, 0) == 1
 
 
+@pytest.mark.spec("math-operations.arithmetic.power-negative-exp")
 def test_power_negative_exponent():
     with pytest.raises(ValueError, match="Negative exponents are not supported"):
         power(2, -1)

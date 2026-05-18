@@ -4,7 +4,7 @@ A Python library of basic arithmetic and numeric utility functions with full tes
 
 ## Arithmetic
 
-#### 🚧 Power/Exponentiation
+#### ✅ Power/Exponentiation
 
 Raise a number to a power.
 
