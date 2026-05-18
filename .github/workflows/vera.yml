@@ -1,4 +1,4 @@
-# vera-template-version: 2026.05.16
+# vera-template-version: 2026.05.17.1
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -63,6 +63,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          # Full history (not the default shallow fetch-depth: 1) so retry
+          # attempts can push to a pre-existing vera/<N>-<slug> branch without
+          # a spurious "unrelated history" rejection (issue #2915).
+          fetch-depth: 0
 
       - name: Fetch job package
         env:
@@ -153,16 +158,26 @@ jobs:
             fi
           fi
           STATUS="completed"
+          ERROR_FIELD=""
           # An agent that could not proceed autonomously writes a
           # needs_input outcome — surface it as awaiting_human (issue #2907).
-          # The agent-exit-code "failed" check below still wins over this.
+          # A failed outcome status (e.g. the exec_script outcome-file contract
+          # check, issue #2931) surfaces as failed and lifts .error into the
+          # callback. The agent-exit-code "failed" check below still wins over
+          # both — a real crash keeps its specific exit-code message.
           if [ -f /tmp/vera_outcome.json ]; then
-            NEEDS_INPUT=$(jq -r '.status // empty' /tmp/vera_outcome.json 2>/dev/null)
-            if [ "$NEEDS_INPUT" = "needs_input" ]; then
+            OUTCOME_STATUS=$(jq -r '.status // empty' /tmp/vera_outcome.json 2>/dev/null)
+            if [ "$OUTCOME_STATUS" = "needs_input" ]; then
               STATUS="awaiting_human"
+            elif [ "$OUTCOME_STATUS" = "failed" ]; then
+              STATUS="failed"
+              OUTCOME_ERROR=$(jq -r '.error // empty' /tmp/vera_outcome.json 2>/dev/null)
+              if [ -n "$OUTCOME_ERROR" ]; then
+                ERROR_FIELD=", \"error\": \"${OUTCOME_ERROR}\""
+              fi
             fi
           fi
-          ERROR_FIELD=""
+
           if [ -f /tmp/vera_agent_exit_code ]; then
             AGENT_EC=$(tr -d '[:space:]' < /tmp/vera_agent_exit_code)
             if [ -n "$AGENT_EC" ] && [ "$AGENT_EC" != "0" ]; then
