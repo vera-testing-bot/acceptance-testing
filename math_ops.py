@@ -80,6 +80,14 @@ def calculate_p_2_pairs():
     return two_pair_hands / total_hands
 
 
+def volume_of_sphere(radius):
+    """Return the volume of a sphere for the given radius."""
+    if radius < 0:
+        raise ValueError("Radius cannot be negative.")
+    pi = 3.141592653589793
+    return (4.0 / 3.0) * pi * (radius**3)
+
+
 def sin(x):
     """Return sin(x) without using the math module."""
     pi = 3.141592653589793

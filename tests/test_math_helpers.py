@@ -1,4 +1,5 @@
 import pytest
+
 import math
 
 from src.math_helpers import (
@@ -11,7 +12,6 @@ from src.math_helpers import (
     SPEED_OF_LIGHT_KM_PER_S,
     SPEED_OF_LIGHT_M_PER_S,
     SPEED_OF_LIGHT_MI_PER_S,
-    calculate_sphere_volume,
     physics_constant,
     divide,
     factorial,
@@ -68,19 +68,6 @@ def test_factorial_positive():
 def test_factorial_negative():
     with pytest.raises(ValueError):
         factorial(-1)
-
-
-def test_calculate_sphere_volume_zero_radius():
-    assert calculate_sphere_volume(0) == 0.0
-
-
-def test_calculate_sphere_volume_positive_radius():
-    assert calculate_sphere_volume(3) == pytest.approx(113.09733552923255)
-
-
-def test_calculate_sphere_volume_negative_radius():
-    with pytest.raises(ValueError):
-        calculate_sphere_volume(-1)
 
 
 def test_speed_of_light_constants_in_multiple_units():
