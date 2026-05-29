@@ -8,6 +8,7 @@ from math_ops import (
     power,
     sin,
     stddev,
+    volume_of_sphere,
 )
 import pytest
 
@@ -146,6 +147,19 @@ def test_calculate_p_2_pairs_returns_expected_probability():
     result = calculate_p_2_pairs()
     assert isinstance(result, float)
     assert result == pytest.approx(0.047539, abs=1e-6)
+
+
+def test_volume_of_sphere_zero_radius():
+    assert volume_of_sphere(0) == 0.0
+
+
+def test_volume_of_sphere_positive_radius():
+    assert volume_of_sphere(3) == pytest.approx(113.09733552923255)
+
+
+def test_volume_of_sphere_negative_radius_raises():
+    with pytest.raises(ValueError, match="Radius cannot be negative"):
+        volume_of_sphere(-1)
 
 
 @pytest.mark.spec("math-operations.statistics.stddev-basic")
