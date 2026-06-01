@@ -38,7 +38,7 @@ def test_creds_step_extracts_github_app_token(creds_step):
 
 def test_creds_step_masks_github_app_token(creds_step):
     run = creds_step["run"]
-    # The token must be masked before being written to output
+    # The token must be masked before being written to env
     lines = run.splitlines()
     mask_idx = next(
         (i for i, l in enumerate(lines) if "add-mask" in l),

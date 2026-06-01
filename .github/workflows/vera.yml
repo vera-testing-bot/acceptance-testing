@@ -1,4 +1,4 @@
-# vera-template-version: 2026.05.17.1
+# vera-template-version: 2026.06.01.1
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -75,8 +75,14 @@ jobs:
           VERA_CALLBACK_TOKEN: ${{ inputs.callback_token }}
           VERA_API_URL: ${{ inputs.vera_api_url }}
         run: |
+          # Issue #3815: every credential-exchange failure path below writes
+          # a ``runner-credential-exchange-failed`` reason to
+          # /tmp/vera_step_failure_reason so the Report failure step surfaces
+          # it and the classifier auto-retries (KNOWN_TRANSIENT_INFRA).
           if [ -z "$VERA_API_URL" ] || [ -z "$VERA_JOB_ID" ] || [ -z "$VERA_CALLBACK_TOKEN" ]; then
             echo "::error::Missing required inputs: vera_api_url, job_id, or callback_token"
+            printf '%s' "runner-credential-exchange-failed: missing required inputs" \
+              > /tmp/vera_step_failure_reason
             exit 1
           fi
           # Retry policy is owned by this loop, NOT curl's --retry. The Vera
@@ -107,6 +113,8 @@ jobs:
               if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
                 echo "::error::vera-creds: budget exhausted after ${MAX_ATTEMPTS} attempts of job_not_ready"
                 printf '%s\n' "$BODY"
+                printf '%s' "runner-credential-exchange-failed: budget exhausted after ${MAX_ATTEMPTS} attempts of job_not_ready" \
+                  > /tmp/vera_step_failure_reason
                 exit 1
               fi
               sleep 2
@@ -114,14 +122,18 @@ jobs:
             fi
             echo "::error::vera-creds: non-retryable HTTP ${HTTP_CODE} on attempt $((ATTEMPT + 1))"
             printf '%s\n' "$BODY"
+            printf '%s' "runner-credential-exchange-failed: non-retryable HTTP ${HTTP_CODE}" \
+              > /tmp/vera_step_failure_reason
             exit 1
           done
           if [ "$HTTP_CODE" = "410" ]; then
-            echo "Job was cancelled by Vera, exiting gracefully"
+            echo "Job was canceled by Vera, exiting gracefully"
             exit 0
           fi
           if [ "$(printf '%s' "$BODY" | jq -r '.status // empty')" != "ok" ]; then
             echo "::error::Credential exchange returned a non-ok status"
+            printf '%s' "runner-credential-exchange-failed: credential exchange returned a non-ok status" \
+              > /tmp/vera_step_failure_reason
             exit 1
           fi
           # Mask every secret BEFORE exporting it.
@@ -211,13 +223,23 @@ jobs:
           VERA_CALLBACK_TOKEN: ${{ inputs.callback_token }}
           VERA_API_URL: ${{ inputs.vera_api_url }}
         run: |
+          # Issue #3815: a prior step's specific reason (Fetch job package
+          # writes one on credential-exchange failure) wins over the opaque
+          # "Workflow failed" so the classifier can retry.
+          ERROR_MSG="Workflow failed"
+          if [ -f /tmp/vera_step_failure_reason ]; then
+            REASON=$(tr -d '\n\r"\\' < /tmp/vera_step_failure_reason | head -c 500)
+            if [ -n "$REASON" ]; then
+              ERROR_MSG="$REASON"
+            fi
+          fi
           # Layer 1+3: a failed callback POST must fail the step (loud, not a
           # warning). On a confirmed 2xx, drop the sentinel that gates the
           # failsafe finalizer below.
           if curl -sf --retry 3 --retry-delay 5 \
             -X POST "${VERA_API_URL}/internal/jobs/callback" \
             -H "Content-Type: application/json" \
-            -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"failed\", \"error\": \"Workflow failed\"}"; then
+            -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"status\": \"failed\", \"error\": \"${ERROR_MSG}\"}"; then
             touch /tmp/vera_callback_sent
           else
             echo "::error::callback POST failed"
