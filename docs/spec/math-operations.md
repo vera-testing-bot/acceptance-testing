@@ -4,7 +4,7 @@ A Python library of basic arithmetic and numeric utility functions with full tes
 
 ## Arithmetic
 
-#### 🚧 Power/Exponentiation
+#### ✅ Power/Exponentiation
 
 Raise a number to a power.
 
@@ -37,7 +37,7 @@ Add two numbers together.
 
 ---
 
-#### 🚧 Multiplication
+#### ✅ Multiplication
 
 Multiply two numbers together.
 
@@ -48,7 +48,7 @@ Multiply two numbers together.
 
 ---
 
-#### 🚧 Division
+#### ✅ Division
 
 Divide one number by another with safe zero-division handling.
 
@@ -61,7 +61,43 @@ Divide one number by another with safe zero-division handling.
 
 ## Utilities
 
-#### 🚧 Absolute Value
+#### ✅ Standard Deviation
+
+Return the population standard deviation for a list of numbers.
+
+**Done when:**
+- `calculate_stddev(numbers)` returns the expected population standard deviation for a representative numeric list <!-- slug: math-operations.statistics.stddev-basic -->
+- `calculate_stddev(numbers)` returns `0.0` for a single-value list <!-- slug: math-operations.statistics.stddev-single-value -->
+- `calculate_stddev(numbers)` raises `ValueError` when input is empty <!-- slug: math-operations.statistics.stddev-empty-input -->
+- Implementation does not use the `statistics` module <!-- slug: math-operations.statistics.stddev-no-statistics-module -->
+
+---
+
+#### ✅ Physics Constants
+
+Expose reusable physics constants for common calculations.
+
+**Done when:**
+- `EARTH_GRAVITY_M_PER_S2` is defined as standard gravity (`9.80665`) <!-- slug: math-operations.utilities.physics.gravity -->
+- Additional constants include gravitational, Planck, and Avogadro constants <!-- slug: math-operations.utilities.physics.additional-constants -->
+- `physics_constant(name)` returns supported constants and raises `ValueError` for unsupported names <!-- slug: math-operations.utilities.physics.lookup -->
+- Tests cover constants, mapping, and validation behavior <!-- slug: math-operations.utilities.physics.has-tests -->
+
+---
+
+#### ✅ Kaprekar Number Check
+
+Return whether a number is a Kaprekar number.
+
+**Done when:**
+- `is_kaprekar_number(n)` returns `True` for known Kaprekar values like `1`, `9`, and `45` <!-- slug: math-operations.utilities.kaprekar-known-values -->
+- `is_kaprekar_number(n)` returns `False` for non-Kaprekar values and negatives <!-- slug: math-operations.utilities.kaprekar-non-values -->
+- Implementation reuses local math helpers in module logic <!-- slug: math-operations.utilities.kaprekar-local-helpers -->
+- Tests are included in the test suite <!-- slug: math-operations.utilities.kaprekar-has-tests -->
+
+---
+
+#### ✅ Absolute Value
 
 Return the absolute (non-negative) value of a number.
 
@@ -70,3 +106,17 @@ Return the absolute (non-negative) value of a number.
 - `absolute(n)` returns `-n` for negative numbers <!-- slug: math-operations.utilities.absolute-negative -->
 - `absolute(0)` returns `0` <!-- slug: math-operations.utilities.absolute-zero -->
 - Tests are included in the test suite <!-- slug: math-operations.utilities.absolute-has-tests -->
+
+---
+
+## Trigonometry
+
+#### ✅ Sine
+
+Return the sine of an angle in radians without using math libraries.
+
+**Done when:**
+- `sin(x)` returns an approximation of sine for radian input <!-- slug: math-operations.trigonometry.sin-returns-approximation -->
+- `sin(x)` is accurate within `1e-6` for representative values <!-- slug: math-operations.trigonometry.sin-accuracy -->
+- Implementation does not rely on existing math libraries <!-- slug: math-operations.trigonometry.sin-no-math-library -->
+- Tests are included in the test suite <!-- slug: math-operations.trigonometry.sin-has-tests -->
