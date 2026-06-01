@@ -9,6 +9,7 @@ from math_ops import (
     rectangle_area,
     sin,
     stddev,
+    volume_of_sphere,
 )
 import pytest
 
@@ -42,18 +43,22 @@ def test_rectangle_area_floats():
 
 
 # Power function tests
+@pytest.mark.spec("math-operations.arithmetic.power-integers")
 def test_power_positive():
     assert power(2, 3) == 8
 
 
+@pytest.mark.spec("math-operations.arithmetic.power-zero")
 def test_power_zero_exponent():
     assert power(2, 0) == 1
 
 
+@pytest.mark.spec("math-operations.arithmetic.power-has-tests")
 def test_power_zero_base_zero_exponent():
     assert power(0, 0) == 1
 
 
+@pytest.mark.spec("math-operations.arithmetic.power-negative-exp")
 def test_power_negative_exponent():
     with pytest.raises(ValueError, match="Negative exponents are not supported"):
         power(2, -1)
@@ -155,6 +160,19 @@ def test_calculate_p_2_pairs_returns_expected_probability():
     result = calculate_p_2_pairs()
     assert isinstance(result, float)
     assert result == pytest.approx(0.047539, abs=1e-6)
+
+
+def test_volume_of_sphere_zero_radius():
+    assert volume_of_sphere(0) == 0.0
+
+
+def test_volume_of_sphere_positive_radius():
+    assert volume_of_sphere(3) == pytest.approx(113.09733552923255)
+
+
+def test_volume_of_sphere_negative_radius_raises():
+    with pytest.raises(ValueError, match="Radius cannot be negative"):
+        volume_of_sphere(-1)
 
 
 @pytest.mark.spec("math-operations.statistics.stddev-basic")
