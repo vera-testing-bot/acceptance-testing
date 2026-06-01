@@ -75,11 +75,13 @@ def main() -> int:
         if args.create:
             create_issue(args.repo, title, body)
             created += 1
-            continue
+        else:
+            print(f"[dry-run] would create issue: {title}")
+            print(body)
+            print("-" * 40)
 
-        print(f"[dry-run] would create issue: {title}")
-        print(body)
-        print("-" * 40)
+        existing_titles.add(title)
+        existing_bodies.append(body)
 
     print(f"planned items found: {len(planned_items)}")
     print(f"issues created: {created}")
