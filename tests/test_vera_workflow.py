@@ -17,19 +17,23 @@ def workflow():
 @pytest.fixture(scope="module")
 def creds_step(workflow):
     steps = workflow["jobs"]["vera"]["steps"]
-    return next(s for s in steps if s.get("name") == "Fetch job package")
+    return next(
+        s
+        for s in steps
+        if s.get("id") == "creds" or s.get("name") == "Fetch job package"
+    )
 
 
 @pytest.fixture(scope="module")
 def run_agent_step(workflow):
     steps = workflow["jobs"]["vera"]["steps"]
-    return next(s for s in steps if s.get("name") == "Run")
+    return next(s for s in steps if s.get("name") in {"Run agent", "Run"})
 
 
 def test_creds_step_extracts_github_app_token(creds_step):
     run = creds_step["run"]
-    assert "secrets" in run, "Fetch credentials step must parse secrets from API response"
-    assert "GITHUB_ENV" in run, "Fetch credentials step must export secrets to GITHUB_ENV"
+    assert ".secrets // {}" in run, "Fetch credentials step must read secrets from API response"
+    assert "to_entries[]" in run, "Fetch credentials step must iterate over secret entries"
 
 
 def test_creds_step_masks_github_app_token(creds_step):
@@ -40,23 +44,26 @@ def test_creds_step_masks_github_app_token(creds_step):
         (i for i, l in enumerate(lines) if "add-mask" in l),
         None,
     )
-    output_idx = next((i for i, l in enumerate(lines) if "GITHUB_ENV" in l), None)
-    assert mask_idx is not None, "github_app_token must be masked with ::add-mask::"
+    output_idx = next(
+        (i for i, l in enumerate(lines) if "GITHUB_ENV" in l and "echo \"${k}=${v}\"" in l),
+        None,
+    )
+    assert mask_idx is not None, "secrets must be masked with ::add-mask::"
     assert output_idx is not None, "secrets must be written to GITHUB_ENV"
-    assert mask_idx < output_idx, "Token must be masked before being exported"
+    assert mask_idx < output_idx, "secrets must be masked before being written to env"
 
 
 def test_run_agent_uses_app_token_for_gh_token(run_agent_step):
     env = run_agent_step["env"]
     gh_token = env.get("GH_TOKEN", "")
-    assert "env.GITHUB_APP_TOKEN" in gh_token, "GH_TOKEN must prefer GITHUB_APP_TOKEN"
+    assert "GITHUB_APP_TOKEN" in gh_token, "GH_TOKEN must prefer github_app_token"
     assert "GITHUB_TOKEN" in gh_token, "GH_TOKEN must fall back to secrets.GITHUB_TOKEN"
 
 
 def test_run_agent_uses_app_token_for_github_token(run_agent_step):
     env = run_agent_step["env"]
     github_token = env.get("GITHUB_TOKEN", "")
-    assert "env.GITHUB_APP_TOKEN" in github_token, "GITHUB_TOKEN must prefer GITHUB_APP_TOKEN"
+    assert "GITHUB_APP_TOKEN" in github_token, "GITHUB_TOKEN must prefer github_app_token"
     assert "GITHUB_TOKEN" in github_token, "GITHUB_TOKEN must fall back to secrets.GITHUB_TOKEN"
 
 

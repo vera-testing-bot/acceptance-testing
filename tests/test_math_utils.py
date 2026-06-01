@@ -3,6 +3,7 @@ import pytest
 from src.math_utils import (
     add,
     calculate_pepperoni_lbs,
+    clamp,
     hello_spec_audit,
     hello_spec_audit_1778114263,
     is_even,
@@ -27,6 +28,18 @@ def test_add_zero():
 
 def test_add_floats():
     assert add(1.5, 2.5) == 4.0
+
+
+def test_clamp_within_range():
+    assert clamp(5, 1, 10) == 5
+
+
+def test_clamp_below_min():
+    assert clamp(-1, 1, 10) == 1
+
+
+def test_clamp_above_max():
+    assert clamp(99, 1, 10) == 10
 
 
 def test_multiply_integers():
