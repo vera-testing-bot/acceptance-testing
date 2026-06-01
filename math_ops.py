@@ -2,6 +2,10 @@ def multiply(a, b):
     return a * b
 
 
+def rectangle_area(length, width):
+    return length * width
+
+
 def power(base, exp):
     """
     Calculate the exponent of a number.

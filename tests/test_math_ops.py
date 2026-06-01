@@ -6,6 +6,7 @@ from math_ops import (
     divide,
     multiply,
     power,
+    rectangle_area,
     sin,
     stddev,
     volume_of_sphere,
@@ -27,6 +28,18 @@ def test_multiply_negative():
 
 def test_multiply_floats():
     assert multiply(2.5, 4) == 10.0
+
+
+def test_rectangle_area_positive():
+    assert rectangle_area(5, 3) == 15
+
+
+def test_rectangle_area_zero_side():
+    assert rectangle_area(5, 0) == 0
+
+
+def test_rectangle_area_floats():
+    assert rectangle_area(2.5, 4.0) == 10.0
 
 
 # Power function tests
