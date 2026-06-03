@@ -2,6 +2,10 @@ def multiply(a, b):
     return a * b
 
 
+def rectangle_area(length, width):
+    return length * width
+
+
 def power(base, exp):
     """
     Calculate the exponent of a number.
@@ -78,6 +82,14 @@ def calculate_p_2_pairs():
     two_pair_hands = pair_rank_choices * pair_suit_choices * kicker_choices
     total_hands = 2_598_960
     return two_pair_hands / total_hands
+
+
+def volume_of_sphere(radius):
+    """Return the volume of a sphere for the given radius."""
+    if radius < 0:
+        raise ValueError("Radius cannot be negative.")
+    pi = 3.141592653589793
+    return (4.0 / 3.0) * pi * (radius**3)
 
 
 def sin(x):
