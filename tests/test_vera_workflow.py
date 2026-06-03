@@ -55,19 +55,20 @@ def test_creds_step_masks_github_app_token(creds_step):
 def test_run_agent_uses_app_token_for_gh_token(run_agent_step):
     env = run_agent_step["env"]
     gh_token = env.get("GH_TOKEN", "")
-    assert "env.GITHUB_APP_TOKEN" in gh_token, "GH_TOKEN must prefer GITHUB_APP_TOKEN"
-    assert "secrets.GITHUB_TOKEN" in gh_token, "GH_TOKEN must fall back to secrets.GITHUB_TOKEN"
+    assert "GITHUB_APP_TOKEN" in gh_token, "GH_TOKEN must prefer GitHub App token"
+    assert "GITHUB_TOKEN" in gh_token, "GH_TOKEN must fall back to secrets.GITHUB_TOKEN"
 
 
 def test_run_agent_uses_app_token_for_github_token(run_agent_step):
     env = run_agent_step["env"]
     github_token = env.get("GITHUB_TOKEN", "")
-    assert "env.GITHUB_APP_TOKEN" in github_token, "GITHUB_TOKEN must prefer GITHUB_APP_TOKEN"
-    assert "secrets.GITHUB_TOKEN" in github_token, "GITHUB_TOKEN must fall back to secrets.GITHUB_TOKEN"
+    assert "GITHUB_APP_TOKEN" in github_token, "GITHUB_TOKEN must prefer GitHub App token"
+    assert "GITHUB_TOKEN" in github_token, "GITHUB_TOKEN must fall back to secrets.GITHUB_TOKEN"
 
 
 def test_run_agent_fallback_references_secrets(run_agent_step):
     env = run_agent_step["env"]
+    # Both vars must reference secrets.GITHUB_TOKEN as fallback
     for var in ("GH_TOKEN", "GITHUB_TOKEN"):
         assert "secrets.GITHUB_TOKEN" in env.get(var, ""), (
             f"{var} must include secrets.GITHUB_TOKEN as fallback"

@@ -24,6 +24,7 @@ def negate(n):
 
 
 def is_even(n):
+    """Returns True when n is divisible by 2."""
     return n % 2 == 0
 
 

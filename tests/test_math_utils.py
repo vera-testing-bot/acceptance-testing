@@ -62,16 +62,16 @@ def test_negate_zero():
     assert negate(0) == 0
 
 
-def test_is_even_true():
-    assert is_even(2) is True
-
-
-def test_is_even_false():
-    assert is_even(3) is False
-
-
-def test_is_even_zero():
-    assert is_even(0) is True
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (2, True),
+        (3, False),
+        (0, True),
+    ],
+)
+def test_is_even_cases(value, expected):
+    assert is_even(value) is expected
 
 
 def test_is_perfect_number_cases():
