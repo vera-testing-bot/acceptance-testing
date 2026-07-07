@@ -10,6 +10,14 @@ Assumptions used by the estimator:
 - 0.1 inch pepperoni thickness
 - 0.038 lb/in^3 pepperoni density
 
+## Hello, World!
+
+`hello.py` in the repo root prints "Hello, World!" when run with `python3 hello.py`.
+
+## Running tests
+
+`just precommit` runs the full test suite via pytest.
+
 ## Spec issue replenishment
 
 Use `scripts/create_issues_from_spec.py` to generate GitHub issues for planned (`🚧`) spec items.
