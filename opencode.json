@@ -1,2 +1,11 @@
 {
-  "$schema": "https://opencode.ai/config.json","provider":{"openrouter":{"options":{"apiKey":"tRlE6cCbWlF7sVAzMg5A_t2seBsfgD5uom09BwjwJq8","baseURL":"http://vera-app-staging.internal:8081/proxy/openrouter/v1","headers":{"x-vera-source":"implement","x-vera-job-id":"2670ff90-73f2-4c8c-9116-bcfba162f9ff","x-vera-issue":"509","x-vera-repo":"vera-testing-bot/acceptance-testing"}},"models":{"z-ai/glm-5.1":{"options":{"reasoning":{"max_tokens":8192},"provider":{"data_collection":"deny"}}},"openai/gpt-5.4":{"options":{"service_tier":"flex"}}}}},"permission":{"external_directory":{"/tmp/**":"allow"}}}
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "openrouter": {
+      "options": {
+        "apiKey": "${OPENROUTER_API_KEY}",
+        "baseURL": "http://vera-app-staging.internal:8081/proxy/openrouter/v1"
+      }
+    }
+  }
+}
