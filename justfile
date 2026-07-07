@@ -1,0 +1,2 @@
+precommit:
+    python3 -m pytest tests -v

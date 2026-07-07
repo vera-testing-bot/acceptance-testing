@@ -5,6 +5,7 @@ requires-python = ">=3.10"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 markers = [
     "spec(slug): maps tests to docs/spec done-when slugs",
 ]
