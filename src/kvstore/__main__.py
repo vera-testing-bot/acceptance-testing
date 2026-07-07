@@ -25,7 +25,7 @@ def main():
             print("Error: --db requires a path argument", file=sys.stderr)
             sys.exit(1)
         store_path = args[idx + 1]
-        args = args[:idx] + args[idx + 2:]
+        args = args[:idx] + args[idx + 2 :]
 
     if not args:
         usage()

@@ -2,7 +2,6 @@ import os
 import pytest
 from src.kvstore.store import KVStore
 from src.kvstore.compactor import compact
-from src.kvstore.wal import WAL
 from src.kvstore.exceptions import KeyNotFoundError
 
 

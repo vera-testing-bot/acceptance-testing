@@ -1,9 +1,9 @@
 def count_words(text):
     """Count the number of words in a text.
-    
+
     Args:
         text: The text to count words in.
-        
+
     Returns:
         int: The number of words in the text.
     """

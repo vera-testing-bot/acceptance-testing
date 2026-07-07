@@ -1,5 +1,3 @@
-import sys
-import io
 from src.hello_world import main, hello_german
 
 

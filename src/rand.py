@@ -11,8 +11,6 @@ by combining entropy from multiple sources:
 
 import time
 import os
-import sys
-import hashlib
 import threading
 
 # Lock for thread-safe seed updates
@@ -46,7 +44,7 @@ def _get_os_entropy() -> int:
     try:
         # Use os.urandom for OS entropy (non-blocking)
         random_bytes = os.urandom(8)
-        return int.from_bytes(random_bytes, byteorder='big')
+        return int.from_bytes(random_bytes, byteorder="big")
     except Exception:
         # Fallback if urandom is not available
         return _get_time_entropy() ^ _get_pid_entropy()
@@ -62,7 +60,9 @@ def _mix_entropy(sources: list[int]) -> int:
     for i, source in enumerate(sources):
         # Rotate and mix each source
         rotation = (i * 17) % 64
-        rotated = ((source << rotation) | (source >> (64 - rotation))) & 0xFFFFFFFFFFFFFFFF
+        rotated = (
+            (source << rotation) | (source >> (64 - rotation))
+        ) & 0xFFFFFFFFFFFFFFFF
         result ^= rotated
         # Additional mixing with multiplication (golden ratio approximation)
         result = (result * 0x9E3779B97F4A7C15) & 0xFFFFFFFFFFFFFFFF
@@ -203,7 +203,7 @@ def random_bytes(n: int) -> bytes:
     while len(result) < n:
         # Generate 8 bytes at a time
         value = int(rand() * (1 << 64))
-        result.extend(value.to_bytes(8, byteorder='big'))
+        result.extend(value.to_bytes(8, byteorder="big"))
     return bytes(result[:n])
 
 

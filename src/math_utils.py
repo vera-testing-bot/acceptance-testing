@@ -76,7 +76,9 @@ def calculate_pepperoni_lbs(pizza_diameter, pepperoni_diameter):
     pepperoni_area = math.pi * pepperoni_radius * pepperoni_radius
 
     effective_coverage_radius = max(pepperoni_radius - OVERLAP_BAND_WIDTH_INCHES, 0.01)
-    effective_coverage_area = math.pi * effective_coverage_radius * effective_coverage_radius
+    effective_coverage_area = (
+        math.pi * effective_coverage_radius * effective_coverage_radius
+    )
 
     slices_needed = pizza_area / effective_coverage_area
     pounds_per_slice = (
