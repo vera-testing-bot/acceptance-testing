@@ -1,4 +1,4 @@
-# vera-template-version: 2026.07.21.1
+# vera-template-version: 2026.07.24.1
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -399,11 +399,21 @@ jobs:
           # Issue #4695: marshal the body with ``jq -n`` so the decoded error
           # (which may contain newlines, quotes, or backslashes) is encoded
           # safely instead of spliced into a JSON literal.
+          # Issue #5278: forward the full outcome JSON (mirroring Report
+          # success) so fields beyond the flattened ERROR_MSG — notably an
+          # ``opencode_crash`` outcome's ``error_detail``/``duration_seconds``/
+          # ``gha_run_url`` — reach the server instead of being dropped on the
+          # floor. ``error_detail`` is internal-only (issue #4913 anti-leak);
+          # forwarding the raw outcome object here does not change that
+          # constraint, it is enforced server-side at render time.
+          OUTCOME_JSON=$(jq -c . /tmp/vera_outcome.json 2>/dev/null || echo null)
           PAYLOAD=$(jq -n \
             --arg job_id "$VERA_JOB_ID" \
             --arg token "$VERA_CALLBACK_TOKEN" \
             --arg error "$ERROR_MSG" \
-            '{job_id:$job_id, token:$token, status:"failed", error:$error}')
+            --argjson outcome "${OUTCOME_JSON:-null}" \
+            '{job_id:$job_id, token:$token, status:"failed", error:$error}
+             + (if $outcome != null then {outcome:$outcome} else {} end)')
           # Layer 1+3: a failed callback POST must fail the step (loud, not a
           # warning). On a confirmed 2xx, drop the sentinel that gates the
           # failsafe finalizer below.
