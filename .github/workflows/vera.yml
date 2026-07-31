@@ -1,4 +1,4 @@
-# vera-template-version: 2026.07.24.1
+# vera-template-version: 2026.07.31.1
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -542,7 +542,7 @@ jobs:
           fi
           if [ -f /tmp/vera_agent.log ]; then
             LOG_TAIL=$(tail -n 20 /tmp/vera_agent.log)
-            BODY="${BODY}"$'\n\n'"<details><summary>Agent log tail</summary>"$'\n\n'"\`\`\`"$'\n'"${LOG_TAIL}"$'\n'"\`\`\`"$'\n'"</details>"
+            BODY="${BODY}"$'\n\n'"**Agent log tail**"$'\n\n'"\`\`\`"$'\n'"${LOG_TAIL}"$'\n'"\`\`\`"
           fi
           BODY="${BODY}"$'\n\n'"🤖 Generated with Claude Opus 4.7"
           gh issue comment "$ORIGINATING_REF" --repo "$GITHUB_REPOSITORY" --body "$BODY"
