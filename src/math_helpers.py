@@ -7,6 +7,8 @@ GRAVITATIONAL_CONSTANT_M3_PER_KG_S2 = 6.67430e-11
 PLANCK_CONSTANT_J_S = 6.62607015e-34
 AVOGADRO_CONSTANT_PER_MOL = 6.02214076e23
 
+THE_ANSWER: int = 42
+
 SPEED_OF_LIGHT = {
     "m/s": SPEED_OF_LIGHT_M_PER_S,
     "km/s": SPEED_OF_LIGHT_KM_PER_S,
@@ -64,3 +66,8 @@ def factorial(n: int) -> int:
     for i in range(2, n + 1):
         result *= i
     return result
+
+
+def get_constant() -> int:
+    """Return a fixed constant value."""
+    return THE_ANSWER
