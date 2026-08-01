@@ -144,25 +144,6 @@ def collect_citations(spec_dir: Path) -> list[SpecCitation]:
     return citations
 
 
-def build_report(citations: list[SpecCitation]) -> dict:
-    by_status: dict[str, int] = {}
-    for citation in citations:
-        by_status[citation.status] = by_status.get(citation.status, 0) + 1
-
-    spec_files = sorted({citation.spec_file for citation in citations})
-
-    return {
-        "citations": [asdict(citation) for citation in citations],
-        "spec_files": spec_files,
-        "summary": {
-            "total": len(citations),
-            "complete": by_status.get("complete", 0),
-            "in_progress": by_status.get("in_progress", 0),
-            "not_started": by_status.get("not_started", 0),
-        },
-    }
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Parse Vera spec files into a machine-readable record set."
@@ -186,10 +167,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     citations = collect_citations(spec_dir)
-    report = build_report(citations)
 
     if args.json:
-        json.dump(report, sys.stdout, indent=2)
+        json.dump([asdict(citation) for citation in citations], sys.stdout, indent=2)
         print()
     else:
         for citation in citations:
