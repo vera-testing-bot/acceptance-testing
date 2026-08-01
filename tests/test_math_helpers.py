@@ -1,6 +1,6 @@
-import pytest
-
 import math
+
+import pytest
 
 from src.math_helpers import (
     AVOGADRO_CONSTANT_PER_MOL,
@@ -12,11 +12,11 @@ from src.math_helpers import (
     SPEED_OF_LIGHT_KM_PER_S,
     SPEED_OF_LIGHT_M_PER_S,
     SPEED_OF_LIGHT_MI_PER_S,
-    get_constant,
-    physics_constant,
     divide,
     factorial,
+    get_constant,
     multiply,
+    physics_constant,
     speed_of_light,
 )
 
@@ -103,19 +103,27 @@ def test_physics_constants_include_core_values():
         abs_tol=0.0,
     )
     assert math.isclose(PLANCK_CONSTANT_J_S, 6.62607015e-34, rel_tol=1e-12, abs_tol=0.0)
-    assert math.isclose(AVOGADRO_CONSTANT_PER_MOL, 6.02214076e23, rel_tol=1e-12, abs_tol=0.0)
+    assert math.isclose(
+        AVOGADRO_CONSTANT_PER_MOL, 6.02214076e23, rel_tol=1e-12, abs_tol=0.0
+    )
 
 
 def test_physics_constant_mapping():
     assert PHYSICS_CONSTANTS["gravity"] == EARTH_GRAVITY_M_PER_S2
-    assert PHYSICS_CONSTANTS["gravitational_constant"] == GRAVITATIONAL_CONSTANT_M3_PER_KG_S2
+    assert (
+        PHYSICS_CONSTANTS["gravitational_constant"]
+        == GRAVITATIONAL_CONSTANT_M3_PER_KG_S2
+    )
     assert PHYSICS_CONSTANTS["planck_constant"] == PLANCK_CONSTANT_J_S
     assert PHYSICS_CONSTANTS["avogadro_constant"] == AVOGADRO_CONSTANT_PER_MOL
 
 
 def test_physics_constant_returns_value_for_name():
     assert physics_constant("gravity") == EARTH_GRAVITY_M_PER_S2
-    assert physics_constant("gravitational_constant") == GRAVITATIONAL_CONSTANT_M3_PER_KG_S2
+    assert (
+        physics_constant("gravitational_constant")
+        == GRAVITATIONAL_CONSTANT_M3_PER_KG_S2
+    )
     assert physics_constant("planck_constant") == PLANCK_CONSTANT_J_S
     assert physics_constant("avogadro_constant") == AVOGADRO_CONSTANT_PER_MOL
 
