@@ -12,6 +12,7 @@ from src.math_helpers import (
     SPEED_OF_LIGHT_KM_PER_S,
     SPEED_OF_LIGHT_M_PER_S,
     SPEED_OF_LIGHT_MI_PER_S,
+    get_constant,
     physics_constant,
     divide,
     factorial,
@@ -122,3 +123,7 @@ def test_physics_constant_returns_value_for_name():
 def test_physics_constant_rejects_unsupported_name():
     with pytest.raises(ValueError, match="Unsupported constant"):
         physics_constant("pi")
+
+
+def test_get_constant_returns_expected_value():
+    assert get_constant() == 42
