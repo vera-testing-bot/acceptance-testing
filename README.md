@@ -1,5 +1,7 @@
 # acceptance-testing
 
+<!-- acceptance-testing repository smoke-test marker -->
+
 ## Pepperoni estimator
 
 `src.math_utils.calculate_pepperoni_lbs(pizza_diameter, pepperoni_diameter)`
