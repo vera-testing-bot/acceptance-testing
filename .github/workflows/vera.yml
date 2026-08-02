@@ -1,4 +1,4 @@
-# vera-template-version: 2026.07.31.1
+# vera-template-version: 2026.08.01.2
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -71,7 +71,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
         with:
           # Full history (not the default shallow fetch-depth: 1) so retry
           # attempts can push to a pre-existing vera/<N>-<slug> branch without
@@ -492,7 +492,7 @@ jobs:
         # in lockstep with ``DURABLE_OUTCOME_ARTIFACT_NAME`` in
         # src/vera/github/actions_api.py.
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vera-job-outcome
           path: /tmp/vera_outcome_artifact.json
