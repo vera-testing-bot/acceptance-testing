@@ -1,4 +1,5 @@
 # acceptance-testing
+<!-- A simple utility README. -->
 
 ## Pepperoni estimator
 
