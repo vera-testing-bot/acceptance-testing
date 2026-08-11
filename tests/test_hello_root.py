@@ -7,6 +7,7 @@ def test_hello_root_script_outputs_hello_world():
         [sys.executable, "hello.py"],
         capture_output=True,
         text=True,
+        check=False,
     )
     assert result.returncode == 0
     assert result.stdout == "Hello, World!\n"
