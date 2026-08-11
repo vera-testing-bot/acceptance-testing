@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Machine-readable spec status parser for Vera spec compliance.
 
-Scans `docs/spec/*.md` for "Done when:" criterion lines written with GitHub-style
-checkboxes. Emits a JSON status report keyed by state.
+Scans ``docs/spec/*.md`` for "Done when:" criterion lines written with
+GitHub-style checkboxes and emits a JSON array of ``SpecRecord`` objects.
 
 States:
-  - [ ]      -> not_started
-  - [#NNN]  -> in_progress (linked to issue NNN)
-  - [x]      -> complete
-Each line must end with an inline slug comment: `<!-- slug: dotted.slug -->`.
+  - ``[ ]``       -> ``not_started``
+  - ``[#NNN]``    -> ``in_progress`` (linked to issue NNN)
+  - ``[x]``       -> ``complete``
+
+Each line must end with an inline slug comment: ``<!-- slug: dotted.slug -->``.
 """
 
 from __future__ import annotations
@@ -18,6 +19,11 @@ import json
 import re
 import sys
 from pathlib import Path
+
+if __package__ is None:
+    from spec_record import SpecRecord
+else:
+    from scripts.spec_record import SpecRecord
 
 
 # Match lines like "- [x] description text <!-- slug: some.slug -->"
@@ -38,26 +44,32 @@ def parse_status(checkbox: str) -> tuple[str, int | None]:
 
     if lowered.startswith("#"):
         digits = lowered.lstrip("#").strip() or None
-        issue: int | None = int(digits) if digits and digits.isdigit() else None
-        return "in_progress", issue
+        if digits and digits.isdigit():
+            issue = int(digits)
+            if issue > 0:
+                return "in_progress", issue
 
     return "not_started", None
 
 
-def scan_spec_dir(spec_dir: Path) -> dict[str, list[dict]]:
-    """Collect every criterion line from the spec directory."""
-    status_groups: dict[str, list[dict]] = {
-        "not_started": [],
-        "in_progress": [],
-        "complete": [],
-    }
+def scan_spec_dir(spec_dir: Path) -> list[SpecRecord]:
+    """Collect every criterion line from the spec directory into records."""
+    records: list[SpecRecord] = []
 
     if not spec_dir.exists():
-        return status_groups
+        return records
 
+    repo_root = Path.cwd().resolve()
     for spec_file in sorted(spec_dir.glob("*.md")):
         in_code_block = False
-        for line in spec_file.read_text(encoding="utf-8").splitlines():
+        file_path = str(
+            spec_file.resolve().relative_to(repo_root)
+            if spec_file.is_absolute()
+            else spec_file
+        )
+        for line_number, line in enumerate(
+            spec_file.read_text(encoding="utf-8").splitlines(), start=1
+        ):
             stripped = line.strip()
             if stripped.startswith("```"):
                 in_code_block = not in_code_block
@@ -70,17 +82,32 @@ def scan_spec_dir(spec_dir: Path) -> dict[str, list[dict]]:
                 continue
 
             status, issue = parse_status(match.group("checkbox"))
-            item = {
-                "slug": match.group("slug"),
-                "text": match.group("text").strip(),
-                "file": str(spec_file),
-            }
-            if issue is not None:
-                item["issue"] = issue
+            records.append(
+                SpecRecord(
+                    slug=match.group("slug"),
+                    text=match.group("text").strip(),
+                    file=file_path,
+                    state=status,
+                    line=line_number,
+                    issue=issue,
+                )
+            )
 
-            status_groups[status].append(item)
+    return records
 
-    return status_groups
+
+def group_records(
+    records: list[SpecRecord],
+) -> dict[str, list[SpecRecord]]:
+    """Group records by state for plain-text rendering."""
+    grouped: dict[str, list[SpecRecord]] = {
+        "not_started": [],
+        "in_progress": [],
+        "complete": [],
+    }
+    for record in records:
+        grouped[record.state].append(record)
+    return grouped
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -90,7 +117,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--json",
         action="store_true",
-        help="Output JSON instead of plain text.",
+        help="Output a JSON array of line-greppable spec records.",
     )
     parser.add_argument(
         "--spec-dir",
@@ -100,18 +127,19 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
-    report = scan_spec_dir(args.spec_dir)
+    records = scan_spec_dir(args.spec_dir)
 
     if args.json:
-        json.dump(report, sys.stdout, indent=2)
+        json.dump([record.to_json() for record in records], sys.stdout, indent=2)
         sys.stdout.write("\n")
     else:
+        grouped = group_records(records)
         for state in ("complete", "in_progress", "not_started"):
-            items = report[state]
+            items = grouped[state]
             print(f"[{state}] {len(items)} item(s)")
             for item in items:
-                suffix = f" (issue #{item['issue']})" if "issue" in item else ""
-                print(f"  - {item['slug']}: {item['text']}{suffix}")
+                suffix = f" (issue #{item.issue})" if item.issue is not None else ""
+                print(f"  - {item.slug}: {item.text}{suffix}")
 
     return 0
 
