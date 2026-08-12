@@ -131,6 +131,15 @@ def test_failsafe_finalizer_step_reads_runtime_manifest(failsafe_finalizer_step)
     assert "MANIFEST_LABEL" in run, (
         "Failsafe finalizer must extract attribution from the runtime manifest"
     )
+    assert ".engine" in run, (
+        "Failsafe finalizer must read the engine field from the manifest"
+    )
+    assert ".model" in run, (
+        "Failsafe finalizer must read the model field from the manifest"
+    )
+    assert ".cli_version" in run, (
+        "Failsafe finalizer must read the cli_version field from the manifest"
+    )
 
 
 def test_credential_exchange_rejects_missing_inputs(creds_step):
@@ -144,4 +153,14 @@ def test_credential_exchange_rejects_non_retryable_http(creds_step):
     run = creds_step["run"]
     assert "runner-credential-exchange-failed: non-retryable HTTP" in run, (
         "Non-retryable HTTP responses must surface a credential-exchange failure reason"
+    )
+
+
+def test_credential_exchange_rejects_non_ok_status(creds_step):
+    run = creds_step["run"]
+    assert "jq -r '.status // empty'" in run, (
+        "Credential response body must be inspected for an ok status"
+    )
+    assert "runner-credential-exchange-failed: credential exchange returned a non-ok status" in run, (
+        "Credential exchange returning a non-ok status must surface a failure reason"
     )
