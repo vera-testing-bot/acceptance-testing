@@ -181,7 +181,7 @@ def test_stddev_returns_population_standard_deviation_for_integers():
     assert stddev(numbers) == pytest.approx(2.0, abs=1e-9)
 
 
-@pytest.mark.spec("math-operations.statistics.stddev-float-input")
+@pytest.mark.spec("math-operations.statistics.stddev-basic")
 def test_stddev_returns_population_standard_deviation_for_floats():
     numbers = [1.5, 2.5, 3.5, 4.5]
     assert stddev(numbers) == pytest.approx(1.118033988749895, abs=1e-12)
