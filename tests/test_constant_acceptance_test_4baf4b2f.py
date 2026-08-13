@@ -2,7 +2,6 @@ import subprocess
 
 import constant_acceptance_test_4baf4b2f
 
-
 EXPECTED_VALUE = "Hello, World!"
 EXPECTED_DOCSTRING = "A friendly greeting for the acceptance test."
 
@@ -22,6 +21,7 @@ def test_module_runs_without_runtime_errors():
         ["python", "constant_acceptance_test_4baf4b2f.py"],
         capture_output=True,
         text=True,
+        check=False,
     )
     assert result.returncode == 0
     assert result.stderr == ""
