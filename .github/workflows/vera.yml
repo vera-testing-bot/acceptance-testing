@@ -1,4 +1,4 @@
-# vera-template-version: 2026.08.13.1
+# vera-template-version: 2026.08.13.2
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -62,10 +62,15 @@ on:
         required: false
         default: ""
         type: string
+      runner_label:
+        description: "Runner pool label to run this job on"
+        required: false
+        default: "vera-runners"
+        type: string
 
 jobs:
   vera:
-    runs-on: vera-runners
+    runs-on: ${{ inputs.runner_label || 'vera-runners' }}
     timeout-minutes: 60
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
