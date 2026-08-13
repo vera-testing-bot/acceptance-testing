@@ -1,4 +1,4 @@
-# vera-template-version: 2026.08.11.1
+# vera-template-version: 2026.08.13.1
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -69,12 +69,13 @@ jobs:
     timeout-minutes: 60
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      # The ONE dynamic credential mapping the spec permits (issue #6379). It
-      # names no personal secret literally — the suffix is a dispatch input, so
+      # Dynamic credential mappings for admin-testing lanes (issue #6379). They
+      # name no personal secret literally — the suffix is a dispatch input, so
       # a personnel change is a repo-secret change, never a template change. An
       # unset secret resolves to "" and the server-composed exec script's
       # presence test then runs the standard runtime. This is data, not a
       # runtime branch: the template gains no engine-specific logic.
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets[format('CLAUDE_CODE_OAUTH_TOKEN_{0}', inputs.assignee_secret_suffix)] }}
       CODEX_ACCESS_TOKEN: ${{ secrets[format('CODEX_ACCESS_TOKEN_{0}', inputs.assignee_secret_suffix)] }}
     permissions:
       contents: write
