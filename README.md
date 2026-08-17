@@ -17,3 +17,4 @@ Use `scripts/create_issues_from_spec.py` to generate GitHub issues for planned (
 
 - Dry run: `PYTHONPATH=. uv run python scripts/create_issues_from_spec.py --repo vera-testing-bot/acceptance-testing`
 - Create issues: `PYTHONPATH=. uv run python scripts/create_issues_from_spec.py --repo vera-testing-bot/acceptance-testing --create`
+# acceptance-ping
