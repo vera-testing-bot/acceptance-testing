@@ -43,10 +43,10 @@ class WAL:
         self._file = open(path, "a", encoding="utf-8")
 
     def append(self, op, key, value=""):
-        ts = f"{time.time():.6f}"
+        timestamp = f"{time.time():.6f}"
         safe_key = escape(key)
         safe_value = escape(value)
-        line = f"{ts}|{op}|{safe_key}|{safe_value}\n"
+        line = f"{timestamp}|{op}|{safe_key}|{safe_value}\n"
         self._file.write(line)
         self._file.flush()
 
