@@ -77,18 +77,27 @@ The `S256` implementation matches the test vector in
 `AuthorizationServer.exchange_code(code, redirect_uri, code_verifier, client_id)`
 validates the authorization code, confirms the redirect URI and client match,
 verifies the PKCE `code_verifier` against the stored challenge, then issues a
-`TokenSet` (access token + refresh token) and stores it. Authorization codes
-are single-use; presenting a consumed code raises `InvalidGrantError`. A
-mismatched verifier raises `PKCEVerificationError`.
+`TokenSet` (access token + refresh token) and stores it. The issuing
+`client_id` is recorded on the `TokenSet` so the refresh grant can enforce
+client binding. Authorization codes are single-use; presenting a consumed code
+raises `InvalidGrantError`. A mismatched verifier raises `PKCEVerificationError`.
 
 ### Refresh Token grant (with rotation)
 
-`AuthorizationServer.refresh(refresh_token)` (or `OAuthClient.refresh`) issues
-a fresh `TokenSet` and rotates the refresh token via `TokenStore.rotate`:
+`AuthorizationServer.refresh(refresh_token, client_id=None)` (or
+`OAuthClient.refresh`, which passes its own `client_id`) issues a fresh
+`TokenSet` and rotates the refresh token via `TokenStore.rotate`:
 
 - the old refresh token is invalidated and remembered as revoked,
 - the old access token is removed,
-- the new token set is stored.
+- the new token set is stored (inheriting the original `client_id`).
+
+Per [RFC 6749 §6](https://datatracker.ietf.org/doc/html/rfc6749#section-6), when
+`client_id` is supplied and the stored token set carries one, the authorization
+server verifies they match and rejects a mismatch with `InvalidGrantError`
+(`OAuthClient.refresh` always supplies its `client_id`, so cross-client
+redemption is blocked). Refreshing without a `client_id` skips the binding
+check (the caller is implicitly the authorization server itself).
 
 Reusing a retired refresh token raises `RefreshTokenReuseError` (surfaced as
 `InvalidGrantError` from the server) — a strong indicator of token theft.
@@ -102,7 +111,7 @@ callable can be injected for deterministic expiry tests.
 | Method | Behavior |
 |--------|----------|
 | `store(token_set)` | Indexes the token set by access and refresh token. |
-| `get_by_access_token(token)` | Returns the set; raises `ExpiredTokenError` if expired, `InvalidRefreshTokenError` if unknown. |
+| `get_by_access_token(token)` | Returns the set; raises `ExpiredTokenError` if expired, `InvalidAccessTokenError` if unknown. |
 | `get_by_refresh_token(token)` | Returns the set; raises `InvalidRefreshTokenError` if unknown. |
 | `is_valid_access_token(token)` | `True` only if present and not expired. |
 | `rotate(refresh_token, new_set)` | Retires the old token, stores the new one; raises `RefreshTokenReuseError` on reuse. |
@@ -112,9 +121,11 @@ callable can be injected for deterministic expiry tests.
 
 ```
 TokenError
-├── InvalidRefreshTokenError   # unknown / removed token
-├── RefreshTokenReuseError     # retired refresh token reused
-└── ExpiredTokenError          # access token past expiry
+├── InvalidTokenError            # unknown / removed token (common base)
+│   ├── InvalidAccessTokenError  # unknown / removed access token
+│   └── InvalidRefreshTokenError # unknown / removed refresh token
+├── RefreshTokenReuseError       # retired refresh token reused
+└── ExpiredTokenError            # access token past expiry
 
 AuthorizationError
 ├── InvalidClientError
@@ -122,6 +133,11 @@ AuthorizationError
 └── InvalidGrantError
     └── PKCEVerificationError
 ```
+
+`AuthMiddleware` catches the shared `InvalidTokenError` base when validating a
+bearer access token, so both unknown-access and unknown-refresh failures are
+handled uniformly without callers reasoning backwards through a misleading
+type.
 
 ## Middleware chain
 

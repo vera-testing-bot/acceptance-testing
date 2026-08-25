@@ -18,6 +18,7 @@ import base64
 import hashlib
 import secrets
 import urllib.parse
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from .tokens import (
@@ -121,7 +122,7 @@ class AuthorizationServer:
     def register_client(
         self,
         client_id: str,
-        redirect_uris,
+        redirect_uris: Iterable[str],
         client_secret: str | None = None,
     ) -> None:
         self._clients[client_id] = _ClientRegistration(
@@ -135,6 +136,19 @@ class AuthorizationServer:
         if client is None:
             raise InvalidClientError(client_id)
         return client
+
+    def _issue_token_set(self, scope: str, client_id: str | None) -> TokenSet:
+        """Mint a fresh access/refresh token set bound to ``client_id``.
+
+        Centralized so the authorization-code grant and the refresh grant
+        stay in lockstep on token shape (length, scope, client binding).
+        """
+        return TokenSet(
+            access_token=generate_token(DEFAULT_TOKEN_LENGTH),
+            refresh_token=generate_token(DEFAULT_REFRESH_TOKEN_LENGTH),
+            scope=scope,
+            client_id=client_id,
+        )
 
     def create_authorization_code(
         self,
@@ -181,10 +195,8 @@ class AuthorizationServer:
         if not secrets.compare_digest(expected_challenge, pending.code_challenge):
             raise PKCEVerificationError("code_verifier does not match code_challenge")
 
-        token_set = TokenSet(
-            access_token=generate_token(DEFAULT_TOKEN_LENGTH),
-            refresh_token=generate_token(DEFAULT_REFRESH_TOKEN_LENGTH),
-            scope=pending.scope,
+        token_set = self._issue_token_set(
+            scope=pending.scope, client_id=pending.client_id
         )
         self.token_store.store(token_set)
         return token_set
@@ -200,11 +212,16 @@ class AuthorizationServer:
         except InvalidRefreshTokenError as exc:
             raise InvalidGrantError("invalid refresh token") from exc
 
+        if (
+            client_id is not None
+            and existing.client_id is not None
+            and existing.client_id != client_id
+        ):
+            raise InvalidGrantError("client_id mismatch")
+
         new_scope = scope if scope is not None else existing.scope
-        new_token_set = TokenSet(
-            access_token=generate_token(DEFAULT_TOKEN_LENGTH),
-            refresh_token=generate_token(DEFAULT_REFRESH_TOKEN_LENGTH),
-            scope=new_scope,
+        new_token_set = self._issue_token_set(
+            scope=new_scope, client_id=existing.client_id
         )
         try:
             self.token_store.rotate(refresh_token, new_token_set)

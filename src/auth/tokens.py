@@ -20,8 +20,16 @@ class TokenError(Exception):
     """Base class for token storage errors."""
 
 
-class InvalidRefreshTokenError(TokenError):
-    """Raised when a refresh or access token is unknown or already removed."""
+class InvalidTokenError(TokenError):
+    """Raised when a token (access or refresh) is unknown or already removed."""
+
+
+class InvalidAccessTokenError(InvalidTokenError):
+    """Raised when an access token is unknown or already removed."""
+
+
+class InvalidRefreshTokenError(InvalidTokenError):
+    """Raised when a refresh token is unknown or already removed."""
 
 
 class RefreshTokenReuseError(TokenError):
@@ -38,7 +46,14 @@ class ExpiredTokenError(TokenError):
 
 
 class TokenSet:
-    """An issued OAuth2 token bundle: an access token plus its refresh token."""
+    """An issued OAuth2 token bundle: an access token plus its refresh token.
+
+    ``expires_at`` is derived from ``issued_at + expires_in`` by default. When
+    an explicit ``expires_at`` is supplied (e.g. extended lifetime, clock-skew
+    correction) it is authoritative and survives a ``to_dict``/``from_dict``
+    round-trip; ``expires_in`` is preserved unchanged as the value advertised
+    to the OAuth client at issuance.
+    """
 
     def __init__(
         self,
@@ -48,6 +63,8 @@ class TokenSet:
         token_type: str = "Bearer",
         scope: str = "",
         issued_at: int | None = None,
+        client_id: str | None = None,
+        expires_at: int | None = None,
     ) -> None:
         self.access_token = access_token
         self.refresh_token = refresh_token
@@ -55,7 +72,10 @@ class TokenSet:
         self.token_type = token_type
         self.scope = scope
         self.issued_at = issued_at if issued_at is not None else int(time.time())
-        self.expires_at = self.issued_at + self.expires_in
+        self.client_id = client_id
+        self.expires_at = (
+            expires_at if expires_at is not None else self.issued_at + self.expires_in
+        )
 
     def is_expired(self, now: int | None = None) -> bool:
         check_at = now if now is not None else int(time.time())
@@ -69,20 +89,22 @@ class TokenSet:
             "token_type": self.token_type,
             "scope": self.scope,
             "issued_at": self.issued_at,
+            "client_id": self.client_id,
             "expires_at": self.expires_at,
         }
 
     @classmethod
     def from_dict(cls, data: dict) -> TokenSet:
-        token_set = cls(
+        return cls(
             access_token=data["access_token"],
             refresh_token=data["refresh_token"],
             expires_in=data["expires_in"],
             token_type=data.get("token_type", "Bearer"),
             scope=data.get("scope", ""),
             issued_at=data.get("issued_at"),
+            client_id=data.get("client_id"),
+            expires_at=data.get("expires_at"),
         )
-        return token_set
 
 
 class TokenStore:
@@ -106,7 +128,7 @@ class TokenStore:
     def get_by_access_token(self, access_token: str) -> TokenSet:
         token_set = self._by_access.get(access_token)
         if token_set is None:
-            raise InvalidRefreshTokenError(access_token)
+            raise InvalidAccessTokenError(access_token)
         if token_set.is_expired(now=self._clock()):
             raise ExpiredTokenError(access_token)
         return token_set

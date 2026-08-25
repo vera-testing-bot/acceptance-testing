@@ -9,9 +9,10 @@ short-circuits the chain with a 401 response when no valid token was found.
 
 from __future__ import annotations
 
+import copy
 from typing import ClassVar
 
-from src.auth.tokens import ExpiredTokenError, InvalidRefreshTokenError, TokenStore
+from src.auth.tokens import ExpiredTokenError, InvalidTokenError, TokenStore
 
 
 class Middleware:
@@ -48,7 +49,7 @@ class AuthMiddleware(Middleware):
         if token is not None:
             try:
                 token_set = self._token_store.get_by_access_token(token)
-            except (InvalidRefreshTokenError, ExpiredTokenError):
+            except (InvalidTokenError, ExpiredTokenError):
                 request["authenticated"] = False
                 request["auth"] = {"authenticated": False}
             else:
@@ -82,7 +83,7 @@ class RequireAuthMiddleware(Middleware):
 
     def handle(self, request: dict) -> dict:
         if not request.get("authenticated"):
-            return self.UNAUTHORIZED_RESPONSE
+            return copy.deepcopy(self.UNAUTHORIZED_RESPONSE)
         return super().handle(request)
 
 

@@ -4,7 +4,9 @@ from src.auth.tokens import (
     DEFAULT_ACCESS_TOKEN_TTL,
     DEFAULT_REFRESH_TOKEN_TTL,
     ExpiredTokenError,
+    InvalidAccessTokenError,
     InvalidRefreshTokenError,
+    InvalidTokenError,
     RefreshTokenReuseError,
     TokenError,
     TokenSet,
@@ -57,6 +59,7 @@ class TestTokenSet:
             token_type="Bearer",
             scope="read write",
             issued_at=1234,
+            client_id="client-1",
         )
         restored = TokenSet.from_dict(token_set.to_dict())
         assert restored.access_token == "a"
@@ -64,7 +67,25 @@ class TestTokenSet:
         assert restored.expires_in == 90
         assert restored.scope == "read write"
         assert restored.issued_at == 1234
+        assert restored.client_id == "client-1"
         assert restored.expires_at == token_set.expires_at
+
+    def test_to_dict_preserves_non_default_expires_at(self):
+        # An explicitly-supplied expires_at (e.g. extended lifetime) must
+        # survive a round-trip rather than being silently recomputed.
+        token_set = TokenSet(
+            access_token="a",
+            refresh_token="r",
+            expires_in=90,
+            issued_at=1000,
+            expires_at=5000,
+        )
+        assert token_set.expires_at == 5000
+
+        restored = TokenSet.from_dict(token_set.to_dict())
+        assert restored.expires_at == 5000
+        assert restored.issued_at == 1000
+        assert restored.expires_in == 90
 
 
 class TestTokenStoreStorage:
@@ -82,7 +103,7 @@ class TestTokenStoreStorage:
 
     def test_get_unknown_access_token_raises(self):
         store = TokenStore()
-        with pytest.raises(InvalidRefreshTokenError):
+        with pytest.raises(InvalidAccessTokenError):
             store.get_by_access_token("nope")
 
     def test_get_unknown_refresh_token_raises(self):
@@ -124,7 +145,7 @@ class TestRefreshTokenRotation:
         # Old tokens are gone
         with pytest.raises(InvalidRefreshTokenError):
             store.get_by_refresh_token("r1")
-        with pytest.raises(InvalidRefreshTokenError):
+        with pytest.raises(InvalidAccessTokenError):
             store.get_by_access_token("a1")
         # New tokens are retrievable
         assert store.get_by_refresh_token("r2") is new
@@ -166,7 +187,7 @@ class TestRefreshTokenRotation:
         store.revoke("refresh-1")
         with pytest.raises(InvalidRefreshTokenError):
             store.get_by_refresh_token("refresh-1")
-        with pytest.raises(InvalidRefreshTokenError):
+        with pytest.raises(InvalidAccessTokenError):
             store.get_by_access_token("access-1")
 
     def test_revoke_unknown_token_is_idempotent(self):
@@ -177,7 +198,17 @@ class TestRefreshTokenRotation:
     def test_reuse_error_is_subclass_of_token_error(self):
         assert issubclass(RefreshTokenReuseError, TokenError)
         assert issubclass(InvalidRefreshTokenError, TokenError)
+        assert issubclass(InvalidAccessTokenError, TokenError)
+        assert issubclass(InvalidTokenError, TokenError)
         assert issubclass(ExpiredTokenError, TokenError)
+        # Access and refresh token errors share a common base so callers
+        # validating either token type can catch InvalidTokenError.
+        assert issubclass(InvalidAccessTokenError, InvalidTokenError)
+        assert issubclass(InvalidRefreshTokenError, InvalidTokenError)
+        # The two leaf types remain distinct: an unknown access token must
+        # not be reported as a refresh-token error (and vice versa).
+        assert not issubclass(InvalidAccessTokenError, InvalidRefreshTokenError)
+        assert not issubclass(InvalidRefreshTokenError, InvalidAccessTokenError)
 
 
 class TestTokenStoreClock:

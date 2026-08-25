@@ -171,6 +171,54 @@ class TestAuthorizationServerRefreshGrant:
         with pytest.raises(InvalidGrantError):
             server.refresh("does-not-exist")
 
+    def test_refresh_rejects_wrong_client_id(self, server, pkce_pair):
+        # RFC 6749 §6: the AS must verify the refresh token was issued to the
+        # requesting client. A token issued to client-1 must not be redeemable
+        # by client-2.
+        verifier, challenge = pkce_pair
+        code = server.create_authorization_code(
+            "client-1", "https://app.example/cb", challenge, CODE_CHALLENGE_METHOD_S256
+        )
+        original = server.exchange_code(
+            code, "https://app.example/cb", verifier, "client-1"
+        )
+
+        with pytest.raises(InvalidGrantError):
+            server.refresh(original.refresh_token, client_id="client-2")
+
+    def test_refresh_records_and_propagates_client_binding(self, server, pkce_pair):
+        verifier, challenge = pkce_pair
+        code = server.create_authorization_code(
+            "client-1", "https://app.example/cb", challenge, CODE_CHALLENGE_METHOD_S256
+        )
+        original = server.exchange_code(
+            code, "https://app.example/cb", verifier, "client-1"
+        )
+
+        assert original.client_id == "client-1"
+
+        refreshed = server.refresh(original.refresh_token, client_id="client-1")
+        assert refreshed.client_id == "client-1"
+
+        # Chained rotation keeps the binding across refreshes.
+        chained = server.refresh(refreshed.refresh_token, client_id="client-1")
+        assert chained.client_id == "client-1"
+
+    def test_refresh_without_client_id_skips_binding_check(self, server, pkce_pair):
+        # A direct server.refresh call without client_id cannot enforce binding
+        # (the caller is implicitly the AS itself); it must still succeed so
+        # the grant remains usable outside the OAuthClient wrapper.
+        verifier, challenge = pkce_pair
+        code = server.create_authorization_code(
+            "client-1", "https://app.example/cb", challenge, CODE_CHALLENGE_METHOD_S256
+        )
+        original = server.exchange_code(
+            code, "https://app.example/cb", verifier, "client-1"
+        )
+
+        refreshed = server.refresh(original.refresh_token)
+        assert refreshed.client_id == "client-1"
+
     def test_refresh_reuse_of_retired_token_fails(self, server, pkce_pair):
         verifier, challenge = pkce_pair
         code = server.create_authorization_code(

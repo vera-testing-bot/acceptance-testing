@@ -151,3 +151,35 @@ def test_expired_token_error_is_token_error():
     from src.auth.tokens import TokenError
 
     assert issubclass(ExpiredTokenError, TokenError)
+
+
+def test_unauthorized_response_is_not_shared_class_state():
+    # The 401 response is returned from a class-level dict; a caller mutating
+    # the returned mapping (top-level OR nested body) must not corrupt
+    # subsequent responses (e.g. adding a WWW-Authenticate header, rewriting
+    # the error body).
+    original = dict(RequireAuthMiddleware.UNAUTHORIZED_RESPONSE)
+    original_body = dict(RequireAuthMiddleware.UNAUTHORIZED_RESPONSE["body"])
+    middleware = RequireAuthMiddleware()
+
+    first = middleware.handle(make_request())
+    first["headers"] = {"WWW-Authenticate": "Bearer"}
+    first["body"]["error"] = "rewritten"
+
+    second = middleware.handle(make_request())
+    assert "WWW-Authenticate" not in second
+    assert second == original
+    assert second["body"] == original_body
+    assert RequireAuthMiddleware.UNAUTHORIZED_RESPONSE == original
+    assert RequireAuthMiddleware.UNAUTHORIZED_RESPONSE["body"] == original_body
+
+
+def test_access_token_errors_share_invalid_token_base():
+    from src.auth.tokens import (
+        InvalidAccessTokenError,
+        InvalidRefreshTokenError,
+        InvalidTokenError,
+    )
+
+    assert issubclass(InvalidAccessTokenError, InvalidTokenError)
+    assert issubclass(InvalidRefreshTokenError, InvalidTokenError)
