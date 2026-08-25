@@ -15,8 +15,6 @@ from src.auth.oauth import (
     create_code_challenge,
     generate_code_verifier,
 )
-from src.auth.tokens import TokenStore
-
 
 # RFC 7636 Appendix B test vector.
 RFC_VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
@@ -25,7 +23,10 @@ RFC_CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
 
 class TestPKCEHelpers:
     def test_s256_challenge_matches_rfc_vector(self):
-        assert create_code_challenge(RFC_VERIFIER, CODE_CHALLENGE_METHOD_S256) == RFC_CHALLENGE
+        assert (
+            create_code_challenge(RFC_VERIFIER, CODE_CHALLENGE_METHOD_S256)
+            == RFC_CHALLENGE
+        )
 
     def test_s256_is_base64url_sha256_without_padding(self):
         verifier = "some-verifier-value"
@@ -37,7 +38,10 @@ class TestPKCEHelpers:
         assert create_code_challenge(verifier, CODE_CHALLENGE_METHOD_S256) == expected
 
     def test_plain_method_returns_verifier_unchanged(self):
-        assert create_code_challenge(RFC_VERIFIER, CODE_CHALLENGE_METHOD_PLAIN) == RFC_VERIFIER
+        assert (
+            create_code_challenge(RFC_VERIFIER, CODE_CHALLENGE_METHOD_PLAIN)
+            == RFC_VERIFIER
+        )
 
     def test_unknown_method_raises(self):
         with pytest.raises(ValueError):
@@ -78,7 +82,9 @@ class TestAuthorizationServerCodeExchange:
             CODE_CHALLENGE_METHOD_S256,
             scope="read",
         )
-        token_set = server.exchange_code(code, "https://app.example/cb", verifier, "client-1")
+        token_set = server.exchange_code(
+            code, "https://app.example/cb", verifier, "client-1"
+        )
 
         assert token_set.access_token
         assert token_set.refresh_token
@@ -92,7 +98,9 @@ class TestAuthorizationServerCodeExchange:
             "client-1", "https://app.example/cb", challenge, CODE_CHALLENGE_METHOD_S256
         )
         with pytest.raises(PKCEVerificationError):
-            server.exchange_code(code, "https://app.example/cb", "wrong-verifier", "client-1")
+            server.exchange_code(
+                code, "https://app.example/cb", "wrong-verifier", "client-1"
+            )
 
     def test_exchange_code_consumed_code_cannot_be_reused(self, server, pkce_pair):
         verifier, challenge = pkce_pair
@@ -135,7 +143,10 @@ class TestAuthorizationServerCodeExchange:
         _, challenge = pkce_pair
         with pytest.raises(InvalidRedirectUriError):
             server.create_authorization_code(
-                "client-1", "https://evil.example/cb", challenge, CODE_CHALLENGE_METHOD_S256
+                "client-1",
+                "https://evil.example/cb",
+                challenge,
+                CODE_CHALLENGE_METHOD_S256,
             )
 
 
@@ -145,7 +156,9 @@ class TestAuthorizationServerRefreshGrant:
         code = server.create_authorization_code(
             "client-1", "https://app.example/cb", challenge, CODE_CHALLENGE_METHOD_S256
         )
-        original = server.exchange_code(code, "https://app.example/cb", verifier, "client-1")
+        original = server.exchange_code(
+            code, "https://app.example/cb", verifier, "client-1"
+        )
 
         refreshed = server.refresh(original.refresh_token)
 
@@ -163,7 +176,9 @@ class TestAuthorizationServerRefreshGrant:
         code = server.create_authorization_code(
             "client-1", "https://app.example/cb", challenge, CODE_CHALLENGE_METHOD_S256
         )
-        original = server.exchange_code(code, "https://app.example/cb", verifier, "client-1")
+        original = server.exchange_code(
+            code, "https://app.example/cb", verifier, "client-1"
+        )
 
         server.refresh(original.refresh_token)
 
@@ -175,7 +190,9 @@ class TestAuthorizationServerRefreshGrant:
         code = server.create_authorization_code(
             "client-1", "https://app.example/cb", challenge, CODE_CHALLENGE_METHOD_S256
         )
-        token_set = server.exchange_code(code, "https://app.example/cb", verifier, "client-1")
+        token_set = server.exchange_code(
+            code, "https://app.example/cb", verifier, "client-1"
+        )
 
         server.revoke(token_set.refresh_token)
 
@@ -207,7 +224,9 @@ class TestOAuthClient:
     def test_start_pkce_flow_returns_matching_verifier_and_challenge(self, server):
         client = OAuthClient("client-1", "https://app.example/cb", server)
         request = client.start_pkce_flow()
-        expected = create_code_challenge(request.code_verifier, request.code_challenge_method)
+        expected = create_code_challenge(
+            request.code_verifier, request.code_challenge_method
+        )
         assert request.code_challenge == expected
         assert request.state
         assert "code_challenge=" in request.authorization_url

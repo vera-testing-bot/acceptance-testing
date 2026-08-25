@@ -8,7 +8,7 @@ Token issuance lives in :mod:`src.auth.oauth`.
 from __future__ import annotations
 
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 DEFAULT_ACCESS_TOKEN_TTL = 3600
 DEFAULT_REFRESH_TOKEN_TTL = 60 * 60 * 24 * 30
@@ -47,7 +47,7 @@ class TokenSet:
         expires_in: int = DEFAULT_ACCESS_TOKEN_TTL,
         token_type: str = "Bearer",
         scope: str = "",
-        issued_at: Optional[int] = None,
+        issued_at: int | None = None,
     ) -> None:
         self.access_token = access_token
         self.refresh_token = refresh_token
@@ -57,7 +57,7 @@ class TokenSet:
         self.issued_at = issued_at if issued_at is not None else int(time.time())
         self.expires_at = self.issued_at + self.expires_in
 
-    def is_expired(self, now: Optional[int] = None) -> bool:
+    def is_expired(self, now: int | None = None) -> bool:
         check_at = now if now is not None else int(time.time())
         return check_at >= self.expires_at
 
@@ -73,7 +73,7 @@ class TokenSet:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "TokenSet":
+    def from_dict(cls, data: dict) -> TokenSet:
         token_set = cls(
             access_token=data["access_token"],
             refresh_token=data["refresh_token"],
@@ -93,7 +93,7 @@ class TokenStore:
     revoked set so that reuse can be detected and reported.
     """
 
-    def __init__(self, clock: Optional[Clock] = None) -> None:
+    def __init__(self, clock: Clock | None = None) -> None:
         self._by_access: dict[str, TokenSet] = {}
         self._by_refresh: dict[str, TokenSet] = {}
         self._revoked_refresh: set[str] = set()

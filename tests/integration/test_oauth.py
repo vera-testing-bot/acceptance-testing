@@ -13,7 +13,6 @@ from __future__ import annotations
 import pytest
 
 from src.auth.oauth import (
-    CODE_CHALLENGE_METHOD_S256,
     AuthorizationServer,
     OAuthClient,
 )
@@ -44,7 +43,7 @@ def system():
 @pytest.fixture
 def authenticated_system(system):
     """System that has already completed the PKCE code exchange once."""
-    token_store, server, client, chain = system.unwrap()
+    _, server, client, _ = system.unwrap()
     request = client.start_pkce_flow(authorize_endpoint=AUTHORIZE_ENDPOINT)
     code = server.create_authorization_code(
         CLIENT_ID,
@@ -82,7 +81,7 @@ def _bearer(token):
 
 class TestAuthorizationCodeGrantWithPKCE:
     def test_full_pkce_flow_issues_usable_access_token(self, system):
-        token_store, server, client, chain = system.unwrap()
+        _, server, client, chain = system.unwrap()
 
         request = client.start_pkce_flow(authorize_endpoint=AUTHORIZE_ENDPOINT)
         code = server.create_authorization_code(
@@ -103,7 +102,7 @@ class TestAuthorizationCodeGrantWithPKCE:
     def test_pkce_flow_with_plain_challenge_method(self, system):
         from src.auth.oauth import CODE_CHALLENGE_METHOD_PLAIN
 
-        token_store, server, client, chain = system.unwrap()
+        _, server, client, _ = system.unwrap()
         request = client.start_pkce_flow(
             authorize_endpoint=AUTHORIZE_ENDPOINT,
             code_challenge_method=CODE_CHALLENGE_METHOD_PLAIN,
@@ -129,7 +128,7 @@ class TestAuthorizationCodeGrantWithPKCE:
         assert "state=" in request.authorization_url
 
     def test_wrong_verifier_blocks_token_issuance(self, system):
-        _, server, client, chain = system.unwrap()
+        _, server, client, _ = system.unwrap()
         request = client.start_pkce_flow(authorize_endpoint=AUTHORIZE_ENDPOINT)
         code = server.create_authorization_code(
             CLIENT_ID,

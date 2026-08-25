@@ -19,7 +19,6 @@ import hashlib
 import secrets
 import urllib.parse
 from dataclasses import dataclass
-from typing import Optional
 
 from .tokens import (
     InvalidRefreshTokenError,
@@ -67,7 +66,9 @@ def generate_code_verifier(length: int = DEFAULT_VERIFIER_LENGTH) -> str:
     return secrets.token_urlsafe(length)[:length]
 
 
-def create_code_challenge(verifier: str, method: str = CODE_CHALLENGE_METHOD_S256) -> str:
+def create_code_challenge(
+    verifier: str, method: str = CODE_CHALLENGE_METHOD_S256
+) -> str:
     """Derive the code challenge from ``verifier`` using ``method``."""
     if method == CODE_CHALLENGE_METHOD_PLAIN:
         return verifier
@@ -106,13 +107,13 @@ class PKCERequest:
 class _ClientRegistration:
     client_id: str
     redirect_uris: set[str]
-    client_secret: Optional[str] = None
+    client_secret: str | None = None
 
 
 class AuthorizationServer:
     """An in-process OAuth2 authorization server supporting PKCE."""
 
-    def __init__(self, token_store: Optional[TokenStore] = None) -> None:
+    def __init__(self, token_store: TokenStore | None = None) -> None:
         self.token_store = token_store or TokenStore()
         self._clients: dict[str, _ClientRegistration] = {}
         self._codes: dict[str, _PendingAuthorization] = {}
@@ -121,7 +122,7 @@ class AuthorizationServer:
         self,
         client_id: str,
         redirect_uris,
-        client_secret: Optional[str] = None,
+        client_secret: str | None = None,
     ) -> None:
         self._clients[client_id] = _ClientRegistration(
             client_id=client_id,
@@ -191,8 +192,8 @@ class AuthorizationServer:
     def refresh(
         self,
         refresh_token: str,
-        client_id: Optional[str] = None,
-        scope: Optional[str] = None,
+        client_id: str | None = None,
+        scope: str | None = None,
     ) -> TokenSet:
         try:
             existing = self.token_store.get_by_refresh_token(refresh_token)
@@ -252,8 +253,8 @@ class OAuthClient:
     def start_pkce_flow(
         self,
         authorize_endpoint: str = "https://auth.example/authorize",
-        code_verifier: Optional[str] = None,
-        state: Optional[str] = None,
+        code_verifier: str | None = None,
+        state: str | None = None,
         code_challenge_method: str = CODE_CHALLENGE_METHOD_S256,
     ) -> PKCERequest:
         verifier = code_verifier or generate_code_verifier()
@@ -275,5 +276,5 @@ class OAuthClient:
             code, self.redirect_uri, code_verifier, self.client_id
         )
 
-    def refresh(self, refresh_token: str, scope: Optional[str] = None) -> TokenSet:
+    def refresh(self, refresh_token: str, scope: str | None = None) -> TokenSet:
         return self.server.refresh(refresh_token, client_id=self.client_id, scope=scope)

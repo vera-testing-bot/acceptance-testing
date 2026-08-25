@@ -9,7 +9,7 @@ short-circuits the chain with a 401 response when no valid token was found.
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import ClassVar
 
 from src.auth.tokens import ExpiredTokenError, InvalidRefreshTokenError, TokenStore
 
@@ -18,9 +18,9 @@ class Middleware:
     """Base middleware: calls the next handler in the chain if one is set."""
 
     def __init__(self) -> None:
-        self._next: Optional["Middleware"] = None
+        self._next: Middleware | None = None
 
-    def set_next(self, middleware: "Middleware") -> "Middleware":
+    def set_next(self, middleware: Middleware) -> Middleware:
         self._next = middleware
         return middleware
 
@@ -64,18 +64,21 @@ class AuthMiddleware(Middleware):
         return super().handle(request)
 
     @staticmethod
-    def _extract_bearer(request: dict) -> Optional[str]:
+    def _extract_bearer(request: dict) -> str | None:
         headers = request.get("headers") or {}
         header = headers.get("Authorization") or headers.get("authorization")
         if not header or not header.startswith("Bearer "):
             return None
-        return header[len("Bearer "):].strip()
+        return header[len("Bearer ") :].strip()
 
 
 class RequireAuthMiddleware(Middleware):
     """Rejects the request with a 401 response when unauthenticated."""
 
-    UNAUTHORIZED_RESPONSE = {"status": 401, "body": {"error": "unauthorized"}}
+    UNAUTHORIZED_RESPONSE: ClassVar[dict] = {
+        "status": 401,
+        "body": {"error": "unauthorized"},
+    }
 
     def handle(self, request: dict) -> dict:
         if not request.get("authenticated"):
@@ -87,10 +90,10 @@ class MiddlewareChain:
     """Builds and runs an ordered chain of middleware."""
 
     def __init__(self) -> None:
-        self._head: Optional[Middleware] = None
-        self._tail: Optional[Middleware] = None
+        self._head: Middleware | None = None
+        self._tail: Middleware | None = None
 
-    def add(self, middleware: Middleware) -> "MiddlewareChain":
+    def add(self, middleware: Middleware) -> MiddlewareChain:
         if self._head is None:
             self._head = middleware
             self._tail = middleware
