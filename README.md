@@ -8,6 +8,7 @@
 
 # acceptance-testing
 <!-- A simple utility README. -->
+<!-- Header comment added per issue #1263. -->
 
 ## Pepperoni estimator
 
