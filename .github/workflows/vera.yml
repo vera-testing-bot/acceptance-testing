@@ -1,4 +1,4 @@
-# vera-template-version: 2026.08.13.3
+# vera-template-version: 2026.08.24.1
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -168,6 +168,23 @@ jobs:
               # post the terminal callback comment.
               touch /tmp/vera_callback_sent
               exit 0
+            fi
+            # Issue #6878: 502/504/503 are Fly edge signals (no healthy
+            # instance, upstream not ready or timed out) and are transient by
+            # construction; 500 stays fatal because it is an application
+            # exception that the server-side classifier retries faster.
+            if [ "$HTTP_CODE" = "502" ] || [ "$HTTP_CODE" = "503" ] || [ "$HTTP_CODE" = "504" ]; then
+              ATTEMPT=$((ATTEMPT + 1))
+              if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+                echo "::error::vera-creds: budget exhausted after ${MAX_ATTEMPTS} attempts, last HTTP ${HTTP_CODE}"
+                printf '%s\n' "$BODY"
+                printf '%s' "runner-credential-exchange-failed: budget exhausted after ${MAX_ATTEMPTS} attempts of HTTP ${HTTP_CODE}" \
+                  > /tmp/vera_step_failure_reason
+                exit 1
+              fi
+              # No jq here: a Fly proxy 502/503 returns HTML, not JSON.
+              sleep "${SLEEP_SECONDS}"
+              continue
             fi
             echo "::error::vera-creds: non-retryable HTTP ${HTTP_CODE} on attempt $((ATTEMPT + 1))"
             printf '%s\n' "$BODY"
