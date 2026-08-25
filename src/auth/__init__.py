@@ -1,3 +1,17 @@
+from src.auth.oauth import (
+    CODE_CHALLENGE_METHOD_PLAIN,
+    CODE_CHALLENGE_METHOD_S256,
+    AuthorizationError,
+    AuthorizationServer,
+    InvalidClientError,
+    InvalidGrantError,
+    InvalidRedirectUriError,
+    OAuthClient,
+    PKCEVerificationError,
+    PKCERequest,
+    create_code_challenge,
+    generate_code_verifier,
+)
 from src.auth.tokens import (
     DEFAULT_ACCESS_TOKEN_TTL,
     DEFAULT_REFRESH_TOKEN_TTL,
@@ -10,12 +24,24 @@ from src.auth.tokens import (
 )
 
 __all__ = [
+    "AuthorizationError",
+    "AuthorizationServer",
+    "CODE_CHALLENGE_METHOD_PLAIN",
+    "CODE_CHALLENGE_METHOD_S256",
     "DEFAULT_ACCESS_TOKEN_TTL",
     "DEFAULT_REFRESH_TOKEN_TTL",
     "ExpiredTokenError",
+    "InvalidClientError",
+    "InvalidGrantError",
+    "InvalidRedirectUriError",
     "InvalidRefreshTokenError",
+    "OAuthClient",
+    "PKCEVerificationError",
+    "PKCERequest",
     "RefreshTokenReuseError",
     "TokenError",
     "TokenSet",
     "TokenStore",
+    "create_code_challenge",
+    "generate_code_verifier",
 ]
