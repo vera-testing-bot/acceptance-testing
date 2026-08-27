@@ -1,4 +1,4 @@
-# vera-template-version: 2026.08.13.3
+# vera-template-version: 2026.08.25.1
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -57,11 +57,6 @@ on:
         required: false
         default: ""
         type: string
-      assignee_secret_suffix:
-        description: "Secret-name suffix for an admin assignee's personal engine credential"
-        required: false
-        default: ""
-        type: string
       runner_label:
         description: "Runner pool label to run this job on"
         required: false
@@ -74,14 +69,6 @@ jobs:
     timeout-minutes: 60
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      # Dynamic credential mappings for admin-testing lanes (issue #6379). They
-      # name no personal secret literally — the suffix is a dispatch input, so
-      # a personnel change is a repo-secret change, never a template change. An
-      # unset secret resolves to "" and the server-composed exec script's
-      # presence test then runs the standard runtime. This is data, not a
-      # runtime branch: the template gains no engine-specific logic.
-      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets[format('CLAUDE_CODE_OAUTH_TOKEN_{0}', inputs.assignee_secret_suffix)] }}
-      CODEX_API_KEY: ${{ secrets[format('CODEX_API_KEY_{0}', inputs.assignee_secret_suffix)] }}
     permissions:
       contents: write
       issues: write
@@ -168,6 +155,23 @@ jobs:
               # post the terminal callback comment.
               touch /tmp/vera_callback_sent
               exit 0
+            fi
+            # Issue #6878: 502/504/503 are Fly edge signals (no healthy
+            # instance, upstream not ready or timed out) and are transient by
+            # construction; 500 stays fatal because it is an application
+            # exception that the server-side classifier retries faster.
+            if [ "$HTTP_CODE" = "502" ] || [ "$HTTP_CODE" = "503" ] || [ "$HTTP_CODE" = "504" ]; then
+              ATTEMPT=$((ATTEMPT + 1))
+              if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+                echo "::error::vera-creds: budget exhausted after ${MAX_ATTEMPTS} attempts, last HTTP ${HTTP_CODE}"
+                printf '%s\n' "$BODY"
+                printf '%s' "runner-credential-exchange-failed: budget exhausted after ${MAX_ATTEMPTS} attempts of HTTP ${HTTP_CODE}" \
+                  > /tmp/vera_step_failure_reason
+                exit 1
+              fi
+              # No jq here: a Fly proxy 502/503 returns HTML, not JSON.
+              sleep "${SLEEP_SECONDS}"
+              continue
             fi
             echo "::error::vera-creds: non-retryable HTTP ${HTTP_CODE} on attempt $((ATTEMPT + 1))"
             printf '%s\n' "$BODY"
