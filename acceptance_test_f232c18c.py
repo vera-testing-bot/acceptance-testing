@@ -1,9 +1,8 @@
 """Acceptance test: a task that verifies vera:canceled on user close."""
 
+from acceptance_test_helpers import user_close
 
-def user_close() -> str:
-    """Return the canceled status reported when a user closes the task."""
-    return "canceled"
+__all__ = ["user_close"]
 
 
 if __name__ == "__main__":
