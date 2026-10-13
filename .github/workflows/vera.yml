@@ -1,4 +1,4 @@
-# vera-template-version: 2026.10.08.2
+# vera-template-version: 2026.10.12.1
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -582,18 +582,26 @@ jobs:
           # metered job with no pool never produces the file, same as the
           # manifest's own "absence is a valid state" contract.
           vera_json_or_null /tmp/vera_pool_capacity.json /tmp/vera_cb_pool_capacity.json
+          # Subscription-engine usage (issue #7037). claude-code/grok bypass the
+          # metered proxy, so this is the only source of their real cost — same
+          # "absence is a valid state" contract as manifest/pool_capacity above.
+          vera_json_or_null /tmp/vera_usage_report.json /tmp/vera_cb_usage_report.json
           jq -n \
             --arg job_id "$VERA_JOB_ID" \
             --arg token "$VERA_CALLBACK_TOKEN" \
             --arg status "$STATUS" \
             --arg error "$ERROR_MSG" \
+            --arg rescued_branch "${RESCUED:-}" \
             --slurpfile outcome /tmp/vera_cb_outcome.json \
             --slurpfile manifest /tmp/vera_cb_manifest.json \
             --slurpfile pool_capacity /tmp/vera_cb_pool_capacity.json \
+            --slurpfile usage_report /tmp/vera_cb_usage_report.json \
             '{job_id:$job_id, token:$token, status:$status}
              + (if $error != "" then {error:$error} else {} end)
+             + (if $rescued_branch != "" then {rescued_branch:$rescued_branch} else {} end)
              + (if $manifest[0] != null then {manifest:$manifest[0]} else {} end)
              + (if $pool_capacity[0] != null then {pool_capacity:$pool_capacity[0]} else {} end)
+             + (if $usage_report[0] != null then {usage_report:$usage_report[0]} else {} end)
              + (if $outcome[0] != null then {outcome:$outcome[0]} else {} end)' \
             > /tmp/vera_callback_body.json
           # Layer 1+3: a failed callback POST must fail the step (loud, not a
@@ -701,6 +709,9 @@ jobs:
           # Pool capacity samples (issue #7059 design C). See the mirrored
           # comment in the success-callback step above.
           vera_json_or_null /tmp/vera_pool_capacity.json /tmp/vera_cb_pool_capacity.json
+          # Subscription-engine usage (issue #7037). See the mirrored comment
+          # in the success-callback step above.
+          vera_json_or_null /tmp/vera_usage_report.json /tmp/vera_cb_usage_report.json
           jq -n \
             --arg job_id "$VERA_JOB_ID" \
             --arg token "$VERA_CALLBACK_TOKEN" \
@@ -708,9 +719,11 @@ jobs:
             --slurpfile outcome /tmp/vera_cb_outcome.json \
             --slurpfile manifest /tmp/vera_cb_manifest.json \
             --slurpfile pool_capacity /tmp/vera_cb_pool_capacity.json \
+            --slurpfile usage_report /tmp/vera_cb_usage_report.json \
             '{job_id:$job_id, token:$token, status:"failed", error:$error}
              + (if $manifest[0] != null then {manifest:$manifest[0]} else {} end)
              + (if $pool_capacity[0] != null then {pool_capacity:$pool_capacity[0]} else {} end)
+             + (if $usage_report[0] != null then {usage_report:$usage_report[0]} else {} end)
              + (if $outcome[0] != null then {outcome:$outcome[0]} else {} end)' \
             > /tmp/vera_callback_body.json
           # Layer 1+3: a failed callback POST must fail the step (loud, not a
@@ -881,3 +894,25 @@ jobs:
           fi
           BODY="${BODY}"$'\n\n'"${FOOTER}"
           gh issue comment "$ORIGINATING_REF" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+
+      # #7482 part 2: the Run step always exits 0 (it captures the agent's
+      # real exit code to a sentinel so the callback/rescue/finalizer chain
+      # above still runs), which left a timed-out or crashed agent run green
+      # in Actions even though the callback reported status=failed. This step
+      # is deliberately last and has NO continue-on-error so a nonzero agent
+      # exit flips the overall job red.
+      - name: Surface agent failure
+        if: always()
+        env:
+          VERA_GRACEFUL_EXIT: ${{ steps.fetch.outputs.graceful_exit }}
+        run: |
+          if [ "$VERA_GRACEFUL_EXIT" = "true" ]; then
+            exit 0
+          fi
+          [ -f /tmp/vera_agent_exit_code ] || exit 0
+          CODE=$(tr -d '[:space:]' < /tmp/vera_agent_exit_code)
+          if [ -n "$CODE" ] && [ "$CODE" != "0" ]; then
+            echo "::error::Agent exited with code ${CODE} — failing the job."
+            exit 1
+          fi
+          exit 0
