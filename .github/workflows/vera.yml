@@ -1,4 +1,4 @@
-# vera-template-version: 2026.10.12.1
+# vera-template-version: 2026.10.13.1
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -886,7 +886,7 @@ jobs:
           # generic system footer rather than naming a model that may not have run.
           FOOTER="🤖 Generated with Vera"
           if [ -f /tmp/vera_manifest.json ]; then
-            MANIFEST_LABEL=$(jq -r '[.engine, .model, .cli_version] | map(select(. != null and . != "")) | join(" ")' \
+            MANIFEST_LABEL=$(jq -r 'def fmt: (split("/") | last) as $raw | ($raw | sub("(?<a>[0-9])-(?<b>[0-9]+)$"; "\(.a).\(.b)")) as $joined | ($joined | gsub("-"; " ") | split(" ") | map(    if length == 0 then . else (.[0:1] | ascii_upcase) + (.[1:] | ascii_downcase) end  ) | join(" "));if ((.model // "") == "") then "Vera" else (.model | fmt) end' \
               /tmp/vera_manifest.json 2>/dev/null || true)
             if [ -n "$MANIFEST_LABEL" ]; then
               FOOTER="🤖 Generated with ${MANIFEST_LABEL}"
