@@ -1,3 +1,3 @@
 def helper() -> int:
-    """Return a constant value."""
+    """Return the constant 42."""
     return 42
