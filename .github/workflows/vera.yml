@@ -1,4 +1,4 @@
-# vera-template-version: 2026.10.13.1
+# vera-template-version: 2026.10.20.1
 # DO NOT EDIT — managed by WorkflowManager. Manual edits will be overwritten.
 #
 # AGENT-NOTE: This file is a PURE BOOTLOADER. It must not contain any
@@ -179,7 +179,7 @@ jobs:
             RESPONSE=$(curl -sS --max-time 30 -D "${HEADER_FILE}" -w $'\n%{http_code}' \
               -X POST "${VERA_API_URL}/internal/jobs/credentials" \
               -H "Content-Type: application/json" \
-              -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"github_actions_run_url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"}") || RESPONSE=$'\n000'
+              -d "{\"job_id\": \"${VERA_JOB_ID}\", \"token\": \"${VERA_CALLBACK_TOKEN}\", \"github_actions_run_url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\", \"github_actions_run_attempt\": ${GITHUB_RUN_ATTEMPT}}") || RESPONSE=$'\n000'
             HTTP_CODE=$(printf '%s' "$RESPONSE" | tail -n1)
             BODY=$(printf '%s' "$RESPONSE" | sed '$d')
             # One observability line per attempt so the cadence is visible
@@ -201,11 +201,11 @@ jobs:
               vera_creds_backoff
               continue
             fi
-            # Issue #3847: a 409 with code=credentials_already_issued means
-            # another runner already won the race and is doing the work. The
-            # job is not failed — it is owned by the winner. Mirror the 410
-            # graceful path so the loser exits 0 instead of failing the
-            # workflow and overwriting the winner's terminal state.
+            # Issue #3847: a 409 with code=credentials_already_issued means a
+            # different run/attempt won the race (#8340: this same run/attempt
+            # retrying gets 200 instead). The job is not failed — it is owned
+            # by the winner. Mirror the 410 path so the loser exits 0 instead
+            # of failing the workflow and overwriting the winner's state.
             if [ "$HTTP_CODE" = "409" ] && \
                [ "$(printf '%s' "$BODY" | jq -r '.code // empty' 2>/dev/null)" = "credentials_already_issued" ]; then
               echo "vera-creds: another runner already owns this job; exiting gracefully"
@@ -815,7 +815,9 @@ jobs:
       - name: Upload agent diagnostics
         # The agent's last tool calls and precommit log tails (#7442). The exec
         # script redacts secrets before writing here: artifacts are never masked.
+        # Best effort: a storage quota error must not turn a passing run red (#8390).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: vera-agent-output
