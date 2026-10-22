@@ -10,9 +10,9 @@ def add(a, b):
     return a + b
 
 
-def clamp(value, min_value, max_value):
-    """Constrains a value to the inclusive range [min_value, max_value]."""
-    return max(min_value, min(value, max_value))
+def clamp(value: float, low: float, high: float) -> float:
+    """Constrains a value to the inclusive range [low, high]."""
+    return max(low, min(value, high))
 
 
 def multiply(a, b):

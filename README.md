@@ -1,5 +1,14 @@
+```
+                     _                        _          _   _           
+ __ _ __ __ ___ _ __| |_ __ _ _ _  __ ___ ___| |_ ___ __| |_(_)_ _  __ _ 
+/ _` / _/ _/ -_) '_ \  _/ _` | ' \/ _/ -_)___|  _/ -_|_-<  _| | ' \/ _` |
+\__,_\__\__\___| .__/\__\__,_|_||_\__\___|    \__\___/__/\__|_|_||_\__, |
+               |_|                                                 |___/ 
+```
+
 # acceptance-testing
 <!-- A simple utility README. -->
+<!-- Header comment added per issue #1263. -->
 
 ## Pepperoni estimator
 
@@ -17,3 +26,12 @@ Use `scripts/create_issues_from_spec.py` to generate GitHub issues for planned (
 
 - Dry run: `PYTHONPATH=. uv run python scripts/create_issues_from_spec.py --repo vera-testing-bot/acceptance-testing`
 - Create issues: `PYTHONPATH=. uv run python scripts/create_issues_from_spec.py --repo vera-testing-bot/acceptance-testing --create`
+
+## Authentication
+
+OAuth2 Authorization Code flow with PKCE, refresh-token rotation, and an
+authentication middleware chain. See [`docs/api/authentication.md`](docs/api/authentication.md)
+for the full API. Entry points: `src.auth.oauth` (PKCE flow + in-process
+authorization server), `src.auth.tokens` (token storage with rotation), and
+`src.middleware.auth` (bearer-token validation middleware).
+# acceptance-ping

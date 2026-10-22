@@ -42,6 +42,18 @@ def test_clamp_above_max():
     assert clamp(99, 1, 10) == 10
 
 
+def test_clamp_acceptance_within_range():
+    assert clamp(5, 0, 10) == 5
+
+
+def test_clamp_acceptance_below_low():
+    assert clamp(-1, 0, 10) == 0
+
+
+def test_clamp_acceptance_above_high():
+    assert clamp(11, 0, 10) == 10
+
+
 def test_multiply_integers():
     assert multiply(6, 7) == 42
 

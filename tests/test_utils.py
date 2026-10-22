@@ -1,4 +1,4 @@
-from kvstore.utils import reverse
+from src.kvstore.utils import reverse
 
 
 def test_reverse():
