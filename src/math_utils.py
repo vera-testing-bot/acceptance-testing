@@ -7,6 +7,7 @@ PEPPERONI_DENSITY_LB_PER_CUBIC_INCH = 0.038
 
 
 def add(a, b):
+    """Return the sum of a and b."""
     return a + b
 
 
