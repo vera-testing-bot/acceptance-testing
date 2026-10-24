@@ -1,0 +1,25 @@
+{
+  "contract_source": "vera#6425",
+  "task_kind_tier": {
+    "triage": "clay",
+    "implement": "stone",
+    "code_review": "stone",
+    "investigate": "stone",
+    "address_feedback": "stone",
+    "multi_review_step": "stone",
+    "review_plan": "bronze",
+    "holistic_review": "pinned"
+  },
+  "removed_enum_members": ["TaskKind.JUDGE"],
+  "pinned_model_overrides": ["holistic_review"],
+  "credential_guards_source": "vera-engine",
+  "credential_guards_note": "identity check, not fork; select_model(exclude=...) blacklist for retry-after-failure",
+  "runtime_manifest_evidence": {
+    "source_job": "PR #871 address-feedback dispatch (job fe57fd69-bc48-4185-8059-765b97cd12c6)",
+    "engine": "opencode",
+    "model": "openrouter/z-ai/glm-5.3",
+    "cli_version": "1.18.7",
+    "guard_result": "pool-empty",
+    "note": "Manifest recorded procedurally by the exec script's tier-based engine chooser before the engine ran, confirming the TASK_KIND_TIER mapping dispatched this job's model via tier selection (address_feedback tier floor: stone)."
+  }
+}
